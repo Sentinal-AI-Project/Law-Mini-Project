@@ -171,24 +171,6 @@ Dashboard & Findings Viewer
         ▼
 Audit Report Generation
 
--------------------------------------------------------------------------------------------------------------
-System Architecture
-
-Sentinel-Law uses a multi-layer architecture.
-
-Frontend (React SPA)
-        │
-        ▼
-Backend API (Node.js + Express)
-        │
-        ▼
-AI Processing Layer (Python NLP)
-        │
-        ▼
-Database (MongoDB)
-        │
-        ▼
-Document Storage
 ----------------------------------------------------------------------------------------------------------
 Final Application Navigation Structure
 Landing Page
@@ -208,3 +190,7 @@ Landing Page
      ├── Compliance Library
      │
      └── Settings
+-------------------------------------------------------------------------------------------------------------------
+<img width="1536" height="1024" alt="ChatGPT Image Mar 5, 2026, 07_20_26 PM" src="https://github.com/user-attachments/assets/af9783ce-0718-4616-929e-a22b9c7cbeab" />
+
+

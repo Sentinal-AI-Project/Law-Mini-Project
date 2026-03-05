@@ -145,3 +145,66 @@ Licensing details will be added in later stages.
 
 This README represents the starting point of the project.
 Features, architecture, and workflows will evolve as development progresses.
+
+------------------------------------------------------------------------------------------------------------
+High-Level System Flow
+
+The core workflow of Sentinel-Law follows a structured pipeline.
+
+User Uploads Document
+        │
+        ▼
+Document Storage (Read-Only)
+        │
+        ▼
+AI Processing Pipeline
+   • Clause Extraction
+   • Risk Detection
+   • Policy Mapping
+        │
+        ▼
+Compliance Findings Generated
+        │
+        ▼
+Dashboard & Findings Viewer
+        │
+        ▼
+Audit Report Generation
+
+-------------------------------------------------------------------------------------------------------------
+System Architecture
+
+Sentinel-Law uses a multi-layer architecture.
+
+Frontend (React SPA)
+        │
+        ▼
+Backend API (Node.js + Express)
+        │
+        ▼
+AI Processing Layer (Python NLP)
+        │
+        ▼
+Database (MongoDB)
+        │
+        ▼
+Document Storage
+----------------------------------------------------------------------------------------------------------
+Final Application Navigation Structure
+Landing Page
+│
+├── Login
+├── Sign Up
+│
+└── Dashboard
+     │
+     ├── Documents
+     │     └── Document Analysis
+     │
+     ├── Findings
+     │
+     ├── Reports
+     │
+     ├── Compliance Library
+     │
+     └── Settings

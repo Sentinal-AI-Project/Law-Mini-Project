@@ -145,3 +145,52 @@ Licensing details will be added in later stages.
 
 This README represents the starting point of the project.
 Features, architecture, and workflows will evolve as development progresses.
+
+------------------------------------------------------------------------------------------------------------
+High-Level System Flow
+
+The core workflow of Sentinel-Law follows a structured pipeline.
+
+User Uploads Document
+        │
+        ▼
+Document Storage (Read-Only)
+        │
+        ▼
+AI Processing Pipeline
+   • Clause Extraction
+   • Risk Detection
+   • Policy Mapping
+        │
+        ▼
+Compliance Findings Generated
+        │
+        ▼
+Dashboard & Findings Viewer
+        │
+        ▼
+Audit Report Generation
+
+----------------------------------------------------------------------------------------------------------
+Final Application Navigation Structure
+Landing Page
+│
+├── Login
+├── Sign Up
+│
+└── Dashboard
+     │
+     ├── Documents
+     │     └── Document Analysis
+     │
+     ├── Findings
+     │
+     ├── Reports
+     │
+     ├── Compliance Library
+     │
+     └── Settings
+-------------------------------------------------------------------------------------------------------------------
+<img width="1536" height="1024" alt="ChatGPT Image Mar 5, 2026, 07_20_26 PM" src="https://github.com/user-attachments/assets/af9783ce-0718-4616-929e-a22b9c7cbeab" />
+
+

@@ -4,12 +4,41 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const storageService = require('./services/storage.service');
 
+// ─── Security Imports ──────────────────────────────────────
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+
 const app = express();
 
 // ─── Middleware ───────────────────────────────────────────
-app.use(cors());
+// Security Headers
+app.use(helmet());
+
+// CORS Configuration
+app.use(cors({
+    origin: process.env.CLIENT_URL || '*', // Update with your frontend URL in production
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api', limiter);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Data Sanitization against NoSQL Query Injection
+app.use(mongoSanitize());
+
+// Data Sanitization against XSS
+app.use(xss());
 
 // Serve uploaded files statically (optional, for development)
 app.use('/uploads', express.static('uploads'));

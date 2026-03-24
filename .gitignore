@@ -3,3 +3,7 @@ uploads/
 .env
 *.log
 .DS_Store
+Sem project
+__pycache__/
+*.pyc
+*.pt

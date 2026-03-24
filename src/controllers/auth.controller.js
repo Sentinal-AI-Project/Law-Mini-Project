@@ -1,5 +1,15 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const bcrypt = require('bcrypt');
+const supabase = require('../config/supabase');
+
+const normalizeUser = (row) => ({
+    id: row.id,
+    _id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    created_at: row.created_at,
+});
 
 /**
  * POST /api/auth/register
@@ -9,28 +19,52 @@ exports.register = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const { data: existingUser, error: findError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', normalizedEmail)
+            .maybeSingle();
+
+        if (findError) {
+            throw findError;
+        }
+
         if (existingUser) {
             return res.status(409).json({ message: 'Email already registered' });
         }
 
-        // Create user (password is hashed by pre-save hook)
-        const user = await User.create({ name, email, password, role });
+        const passwordHash = await bcrypt.hash(password, 10);
+        const allowedRoles = ['admin', 'analyst', 'viewer'];
+        const userRole = allowedRoles.includes(role) ? role : 'analyst';
 
-        // Generate JWT
+        const { data: user, error: insertError } = await supabase
+            .from('users')
+            .insert({
+                name,
+                email: normalizedEmail,
+                password_hash: passwordHash,
+                role: userRole,
+            })
+            .select('id, name, email, role, created_at')
+            .single();
+
+        if (insertError) {
+            throw insertError;
+        }
+
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            { id: user.id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
         res.status(201).json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role },
+            user: normalizeUser(user),
         });
     } catch (err) {
-        if (err.code === 11000) {
+        if (String(err.message || '').toLowerCase().includes('duplicate')) {
             return res.status(409).json({ message: 'Email already registered' });
         }
         res.status(500).json({ message: 'Registration failed', error: err.message });
@@ -49,25 +83,35 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, name, email, role, password_hash, created_at')
+            .eq('email', normalizedEmail)
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        const isMatch = await user.comparePassword(password);
+        const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            { id: user.id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
         res.json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role },
+            user: normalizeUser(user),
         });
     } catch (err) {
         res.status(500).json({ message: 'Login failed', error: err.message });
@@ -80,11 +124,21 @@ exports.login = async (req, res) => {
  */
 exports.getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, name, email, role, created_at')
+            .eq('id', req.user.id)
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json({ user });
+
+        res.json({ user: normalizeUser(user) });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch profile', error: err.message });
     }

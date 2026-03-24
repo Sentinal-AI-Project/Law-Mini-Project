@@ -1,6 +1,4 @@
-const Policy = require('../models/Policy');
-const Finding = require('../models/Finding');
-const Document = require('../models/Document');
+const supabase = require('../config/supabase');
 
 /**
  * GET /api/compliance/policies
@@ -10,10 +8,23 @@ exports.listPolicies = async (req, res) => {
     try {
         const { framework, is_active = true } = req.query;
 
-        const filter = { is_active: is_active === 'true' || is_active === true };
-        if (framework) filter.framework = framework;
+        let query = supabase
+            .from('policies')
+            .select('id, name, framework, description, version, rules, is_active, created_at, updated_at')
+            .eq('is_active', is_active === 'true' || is_active === true)
+            .order('framework', { ascending: true })
+            .order('name', { ascending: true });
 
-        const policies = await Policy.find(filter).sort({ framework: 1, name: 1 });
+        if (framework) {
+            query = query.eq('framework', framework);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+            throw error;
+        }
+
+        const policies = (data || []).map((p) => ({ ...p, _id: p.id }));
         res.json({ policies, total: policies.length });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch policies', error: err.message });
@@ -32,15 +43,23 @@ exports.createPolicy = async (req, res) => {
 
         const { name, framework, description, version, rules } = req.body;
 
-        const policy = await Policy.create({
-            name,
-            framework,
-            description,
-            version,
-            rules,
-        });
+        const { data, error } = await supabase
+            .from('policies')
+            .insert({
+                name,
+                framework,
+                description,
+                version,
+                rules: Array.isArray(rules) ? rules : [],
+            })
+            .select('id, name, framework, description, version, rules, is_active, created_at, updated_at')
+            .single();
 
-        res.status(201).json({ policy });
+        if (error) {
+            throw error;
+        }
+
+        res.status(201).json({ policy: { ...data, _id: data.id } });
     } catch (err) {
         res.status(500).json({ message: 'Failed to create policy', error: err.message });
     }
@@ -52,48 +71,63 @@ exports.createPolicy = async (req, res) => {
  */
 exports.getDashboard = async (req, res) => {
     try {
-        const [
-            totalDocuments,
-            pendingDocuments,
-            analyzingDocuments,
-            completedDocuments,
-            totalFindings,
-            severityBreakdown,
-            riskTypeBreakdown,
-            recentCriticalFindings,
-        ] = await Promise.all([
-            Document.countDocuments(),
-            Document.countDocuments({ status: 'pending' }),
-            Document.countDocuments({ status: 'analyzing' }),
-            Document.countDocuments({ status: 'completed' }),
-            Finding.countDocuments({ confidence: { $gte: 0.7 } }),
-            Finding.aggregate([
-                { $match: { confidence: { $gte: 0.7 } } },
-                { $group: { _id: '$severity', count: { $sum: 1 } } },
-            ]),
-            Finding.aggregate([
-                { $match: { confidence: { $gte: 0.7 } } },
-                { $group: { _id: '$risk_type', count: { $sum: 1 } } },
-            ]),
-            Finding.find({ severity: 'critical', confidence: { $gte: 0.7 } })
-                .populate('document_id', 'filename doc_type')
-                .sort({ created_at: -1 })
-                .limit(5),
+        const [docsRes, findingsRes] = await Promise.all([
+            supabase.from('documents').select('id, status', { count: 'exact' }),
+            supabase.from('findings').select('id, severity, risk_type, confidence, created_at, document_id', { count: 'exact' }).gte('confidence', 0.7),
         ]);
 
+        if (docsRes.error) throw docsRes.error;
+        if (findingsRes.error) throw findingsRes.error;
+
+        const docs = docsRes.data || [];
+        const findings = findingsRes.data || [];
+
+        const pendingDocuments = docs.filter((d) => d.status === 'pending').length;
+        const analyzingDocuments = docs.filter((d) => d.status === 'analyzing').length;
+        const completedDocuments = docs.filter((d) => d.status === 'completed' || d.status === 'analyzed').length;
+
+        const severityMap = {};
+        const riskTypeMap = {};
+        for (const finding of findings) {
+            severityMap[finding.severity] = (severityMap[finding.severity] || 0) + 1;
+            riskTypeMap[finding.risk_type] = (riskTypeMap[finding.risk_type] || 0) + 1;
+        }
+
+        const critical = severityMap.critical || 0;
+        const high = severityMap.high || 0;
+        const medium = severityMap.medium || 0;
+        const low = severityMap.low || 0;
+        const weightedRisk = (critical * 4) + (high * 3) + (medium * 2) + low;
+        const maxRisk = Math.max(findings.length * 4, 1);
+        const complianceScore = Math.max(0, Math.min(100, Math.round(100 - (weightedRisk / maxRisk) * 100)));
+
+        const severityBreakdown = Object.entries(severityMap).map(([key, count]) => ({ _id: key, count }));
+        const riskTypeBreakdown = Object.entries(riskTypeMap).map(([key, count]) => ({ _id: key, count }));
+
+        const criticalFindings = findings
+            .filter((f) => f.severity === 'critical')
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 5)
+            .map((f) => ({ ...f, _id: f.id }));
+
+        // Backward-compatible + frontend-friendly dashboard keys.
         res.json({
+            totalDocuments: docs.length,
+            totalFindings: findings.length,
+            complianceScore,
+            processingCount: pendingDocuments + analyzingDocuments,
             documents: {
-                total: totalDocuments,
+                total: docs.length,
                 pending: pendingDocuments,
                 analyzing: analyzingDocuments,
                 completed: completedDocuments,
             },
             findings: {
-                total: totalFindings,
+                total: findings.length,
                 by_severity: severityBreakdown,
                 by_risk_type: riskTypeBreakdown,
             },
-            recent_critical: recentCriticalFindings,
+            recent_critical: criticalFindings,
         });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch dashboard data', error: err.message });
@@ -106,30 +140,63 @@ exports.getDashboard = async (req, res) => {
  */
 exports.checkCompliance = async (req, res) => {
     try {
-        const doc = await Document.findById(req.params.docId);
+        const { data: doc, error: docError } = await supabase
+            .from('documents')
+            .select('id, filename, status')
+            .eq('id', req.params.docId)
+            .maybeSingle();
+
+        if (docError) {
+            throw docError;
+        }
+
         if (!doc) {
             return res.status(404).json({ message: 'Document not found' });
         }
 
-        const findings = await Finding.find({
-            document_id: req.params.docId,
-            confidence: { $gte: 0.7 },
-        })
-            .populate('policy_ref_id', 'name framework')
-            .sort({ severity: 1 });
+        const { data: findings, error: findingsError } = await supabase
+            .from('findings')
+            .select('id, document_id, policy_ref_id, risk_type, severity, confidence, description, evidence_snippet, created_at')
+            .eq('document_id', req.params.docId)
+            .gte('confidence', 0.7)
+            .order('created_at', { ascending: false });
 
-        const hasCritical = findings.some(f => f.severity === 'critical');
-        const hasHigh = findings.some(f => f.severity === 'high');
+        if (findingsError) {
+            throw findingsError;
+        }
+
+        const policyIds = [...new Set((findings || []).map((f) => f.policy_ref_id).filter(Boolean))];
+        let policyMap = new Map();
+        if (policyIds.length) {
+            const { data: policies, error: policiesError } = await supabase
+                .from('policies')
+                .select('id, name, framework')
+                .in('id', policyIds);
+            if (policiesError) {
+                throw policiesError;
+            }
+            policyMap = new Map((policies || []).map((p) => [p.id, { ...p, _id: p.id }]));
+        }
+
+        const decoratedFindings = (findings || []).map((f) => ({
+            ...f,
+            _id: f.id,
+            policy_ref_id: policyMap.get(f.policy_ref_id) || f.policy_ref_id,
+        }));
+
+        const hasCritical = decoratedFindings.some((f) => f.severity === 'critical');
+        const hasHigh = decoratedFindings.some((f) => f.severity === 'high');
 
         res.json({
             document: {
-                id: doc._id,
+                id: doc.id,
+                _id: doc.id,
                 filename: doc.filename,
                 status: doc.status,
             },
             compliance_status: hasCritical ? 'non_compliant' : hasHigh ? 'at_risk' : 'compliant',
-            total_findings: findings.length,
-            findings,
+            total_findings: decoratedFindings.length,
+            findings: decoratedFindings,
         });
     } catch (err) {
         res.status(500).json({ message: 'Compliance check failed', error: err.message });

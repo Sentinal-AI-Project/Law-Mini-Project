@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Info, UploadCloud, FileText, CheckCircle2, AlertTriangle, AlertCircle, Play, X } from 'lucide-react';
 import { docsAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const UploadDocuments = () => {
+  const navigate = useNavigate();
   const [framework, setFramework] = useState('');
   const [files, setFiles] = useState([]); // [{ file, status, docId, error, progress }]
   const [analyzing, setAnalyzing] = useState(false);
@@ -52,6 +54,23 @@ const UploadDocuments = () => {
   };
 
   const removeFile = (idx) => setFiles((prev) => prev.filter((_, i) => i !== idx));
+
+  const handleViewReport = () => navigate('/reports');
+  const handleDownload = () => {
+    const blob = new Blob(['Demo download content for upload history item.'], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'upload-history-report.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRetryAnalysis = () => {
+    window.alert('Retry queued in demo mode.');
+  };
 
   const statusIcon = (entry) => {
     if (entry.status === 'uploaded' || entry.status === 'analyzing') return <CheckCircle2 size={16} />;
@@ -171,8 +190,8 @@ const UploadDocuments = () => {
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>3 documents • 2 hours ago</div>
                 <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
-                  <button style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
-                  <button style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
+                  <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
+                  <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
                 </div>
              </div>
 
@@ -199,7 +218,7 @@ const UploadDocuments = () => {
                   </span>
                 </div>
                 <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: '1rem' }}>Failed to process corrupted files</div>
-                <button style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}>Retry Analysis</button>
+                 <button onClick={handleRetryAnalysis} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}>Retry Analysis</button>
              </div>
 
              {/* History Item 4 */}
@@ -212,12 +231,12 @@ const UploadDocuments = () => {
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>2 documents • Yesterday</div>
                 <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
-                  <button style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
-                  <button style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
+                  <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
+                  <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
                 </div>
              </div>
              
-             <button style={{ width: '100%', marginTop: '0.5rem', padding: '1rem', border: 'none', background: 'none', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
+             <button onClick={() => navigate('/reports')} style={{ width: '100%', marginTop: '0.5rem', padding: '1rem', border: 'none', background: 'none', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
                View All History
              </button>
 

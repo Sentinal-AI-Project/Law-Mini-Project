@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { AlertCircle, Download, FileText, Shield, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ExecutiveSummary = () => {
+  const navigate = useNavigate();
+  const [trendWindow, setTrendWindow] = useState('90D');
+
+  const handleDownloadSummary = () => {
+    const blob = new Blob(['Executive Summary\nOverall Risk Score: 72/100\nCompliance Rate: 87%\n'], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'executive-summary.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -32,14 +48,14 @@ const ExecutiveSummary = () => {
             </div>
           </div>
         </div>
-        <button style={{ background: '#fff', color: '#dc2626', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
+        <button onClick={() => navigate('/findings')} style={{ background: '#fff', color: '#dc2626', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
       </div>
 
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
-        <button className="btn btn-primary" style={{ flex: 1, background: '#4f46e5', color: '#fff', gap: '0.75rem', padding: '1rem' }}>
+        <button onClick={handleDownloadSummary} className="btn btn-primary" style={{ flex: 1, background: '#4f46e5', color: '#fff', gap: '0.75rem', padding: '1rem' }}>
           <Download size={20} /> Download Executive Summary
         </button>
-        <button className="btn btn-outline" style={{ flex: 1, background: '#fff', gap: '0.75rem', padding: '1rem' }}>
+        <button onClick={() => navigate('/reports')} className="btn btn-outline" style={{ flex: 1, background: '#fff', gap: '0.75rem', padding: '1rem' }}>
           <FileText size={20} /> View Full Report
         </button>
       </div>
@@ -99,9 +115,9 @@ const ExecutiveSummary = () => {
               <p style={{ fontSize: '0.85rem', color: '#64748b' }}>90-day risk trajectory analysis</p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', background: '#f8fafc', padding: '0.25rem', borderRadius: '8px' }}>
-              <button style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: 'transparent', color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>30D</button>
-              <button style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: '#fff', color: '#3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '0.85rem', fontWeight: 600 }}>90D</button>
-              <button style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: 'transparent', color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>1Y</button>
+              <button onClick={() => setTrendWindow('30D')} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: trendWindow === '30D' ? '#fff' : 'transparent', color: trendWindow === '30D' ? '#3b82f6' : '#64748b', boxShadow: trendWindow === '30D' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', fontSize: '0.85rem', fontWeight: trendWindow === '30D' ? 600 : 500 }}>30D</button>
+              <button onClick={() => setTrendWindow('90D')} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: trendWindow === '90D' ? '#fff' : 'transparent', color: trendWindow === '90D' ? '#3b82f6' : '#64748b', boxShadow: trendWindow === '90D' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', fontSize: '0.85rem', fontWeight: trendWindow === '90D' ? 600 : 500 }}>90D</button>
+              <button onClick={() => setTrendWindow('1Y')} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: trendWindow === '1Y' ? '#fff' : 'transparent', color: trendWindow === '1Y' ? '#3b82f6' : '#64748b', boxShadow: trendWindow === '1Y' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', fontSize: '0.85rem', fontWeight: trendWindow === '1Y' ? 600 : 500 }}>1Y</button>
             </div>
           </div>
           

@@ -17,6 +17,7 @@ const Findings = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
+  const [reviewedIds, setReviewedIds] = useState([]);
 
   useEffect(() => {
     const fetchFindings = async () => {
@@ -38,6 +39,19 @@ const Findings = () => {
     f.description?.toLowerCase().includes(search.toLowerCase()) ||
     f.severity?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleAddNote = () => {
+    if (!selected) return;
+    const note = window.prompt('Add a note for this finding:');
+    if (note) {
+      window.alert('Note saved in demo mode.');
+    }
+  };
+
+  const handleMarkReviewed = () => {
+    if (!selected) return;
+    setReviewedIds((prev) => (prev.includes(selected._id) ? prev : [...prev, selected._id]));
+  };
 
   return (
     <DashboardLayout>
@@ -117,16 +131,19 @@ const Findings = () => {
                     {selected.confidence != null && (
                       <span style={{ color: '#475569', fontSize: '0.9rem' }}>Confidence: <span style={{ fontWeight: 700 }}>{(selected.confidence * 100).toFixed(0)}%</span></span>
                     )}
+                    {reviewedIds.includes(selected._id) && (
+                      <span style={{ color: '#059669', fontWeight: 600, fontSize: '0.85rem' }}>Reviewed</span>
+                    )}
                   </div>
                   <h1 style={{ fontSize: '1.75rem', color: '#1e293b', marginBottom: '0.5rem' }}>{selected.description || 'Finding'}</h1>
                   {selected.explanation && <p style={{ color: '#64748b', fontSize: '1rem' }}>{selected.explanation}</p>}
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', background: '#f1f5f9', border: 'none' }}>
+                  <button onClick={handleAddNote} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', background: '#f1f5f9', border: 'none' }}>
                     <MessageSquare size={18} /> Add Note
                   </button>
-                  <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#2563eb', color: '#fff' }}>
-                    <Check size={18} /> Mark as Reviewed
+                  <button onClick={handleMarkReviewed} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: reviewedIds.includes(selected._id) ? '#059669' : '#2563eb', color: '#fff' }}>
+                    <Check size={18} /> {reviewedIds.includes(selected._id) ? 'Reviewed' : 'Mark as Reviewed'}
                   </button>
                 </div>
               </div>

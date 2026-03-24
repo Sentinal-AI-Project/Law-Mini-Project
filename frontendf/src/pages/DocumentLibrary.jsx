@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Search, Filter, Plus, FileText, FileSpreadsheet, Eye, Download, CheckCircle, Clock } from 'lucide-react';
 import { docsAPI } from '../services/api';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const DocumentLibrary = () => {
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,6 +25,16 @@ const DocumentLibrary = () => {
     fetchDocs();
   }, []);
 
+  const handleUpload = () => navigate('/upload');
+  const handleViewDocument = (doc) => {
+    window.alert(`Preview for ${doc.filename || 'document'} is not enabled yet. Redirecting to Findings.`);
+    navigate('/findings');
+  };
+
+  const handlePageClick = (page) => {
+    window.alert(`Pagination is demo-only. You selected page ${page}.`);
+  };
+
   const filtered = documents.filter((d) =>
     d.filename?.toLowerCase().includes(search.toLowerCase())
   );
@@ -35,7 +46,7 @@ const DocumentLibrary = () => {
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#1e293b' }}>Document Library</h1>
           <p style={{ color: 'var(--text-muted)' }}>Manage and review your security documents</p>
         </div>
-        <button className="btn btn-secondary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <button className="btn btn-secondary" onClick={handleUpload} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Plus size={20} /> Upload Document
         </button>
       </div>
@@ -146,7 +157,7 @@ const DocumentLibrary = () => {
                  </td>
                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: '#94a3b8' }}>
-                     <button style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
+                     <button onClick={() => handleViewDocument(doc)} style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
                    </div>
                  </td>
                </tr>
@@ -157,11 +168,11 @@ const DocumentLibrary = () => {
         <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.9rem' }}>
           <div>Showing 1 to 25 of 247 results</div>
           <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>{'<'}</button>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid currentColor', borderRadius: '6px', background: '#2563eb', color: '#fff', cursor: 'pointer' }}>1</button>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>2</button>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>3</button>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>{'>'}</button>
+            <button onClick={() => handlePageClick('prev')} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>{'<'}</button>
+            <button onClick={() => handlePageClick(1)} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid currentColor', borderRadius: '6px', background: '#2563eb', color: '#fff', cursor: 'pointer' }}>1</button>
+            <button onClick={() => handlePageClick(2)} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>2</button>
+            <button onClick={() => handlePageClick(3)} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>3</button>
+            <button onClick={() => handlePageClick('next')} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}>{'>'}</button>
           </div>
         </div>
       </div>

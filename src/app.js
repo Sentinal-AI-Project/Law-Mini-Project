@@ -7,8 +7,6 @@ const storageService = require('./services/storage.service');
 // ─── Security Imports ──────────────────────────────────────
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
 
 const app = express();
 
@@ -33,12 +31,6 @@ app.use('/api', limiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Data Sanitization against NoSQL Query Injection
-app.use(mongoSanitize());
-
-// Data Sanitization against XSS
-app.use(xss());
 
 // Serve uploaded files statically (optional, for development)
 app.use('/uploads', express.static('uploads'));
@@ -87,7 +79,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
-    // Connect to MongoDB
+    // Verify Supabase connectivity
     await connectDB();
 
     // Ensure upload directory exists

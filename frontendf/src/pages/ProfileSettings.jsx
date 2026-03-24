@@ -3,6 +3,8 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Camera, Edit2, ShieldAlert, Key, User, Download, Settings, Smartphone, Trash2 } from 'lucide-react';
 
 const ProfileSettings = () => {
+  const notify = (msg) => window.alert(msg);
+
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
@@ -19,7 +21,7 @@ const ProfileSettings = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
               <div style={{ position: 'relative' }}>
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=JohnAnderson" alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f1f5f9', border: '3px solid #fff', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                <button style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', borderRadius: '50%', background: '#4f46e5', color: '#fff', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <button onClick={() => notify('Avatar upload is enabled in demo mode.')} style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', borderRadius: '50%', background: '#4f46e5', color: '#fff', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                   <Camera size={14} />
                 </button>
               </div>
@@ -33,7 +35,7 @@ const ProfileSettings = () => {
                 </div>
               </div>
             </div>
-            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff' }}>
+            <button onClick={() => notify('Profile editing enabled in demo mode.')} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff' }}>
               <Edit2 size={16} /> Edit Profile
             </button>
           </div>
@@ -42,7 +44,7 @@ const ProfileSettings = () => {
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', color: '#1e293b' }}>Personal Information</h3>
-              <button style={{ background: 'none', border: 'none', color: '#4f46e5', fontSize: '0.9rem', fontWeight: 600, display: 'flex', gap: '0.25rem', alignItems: 'center', cursor: 'pointer' }}>
+              <button onClick={() => notify('Inline edit mode is active.')} style={{ background: 'none', border: 'none', color: '#4f46e5', fontSize: '0.9rem', fontWeight: 600, display: 'flex', gap: '0.25rem', alignItems: 'center', cursor: 'pointer' }}>
                 <Edit2 size={14} /> Edit
               </button>
             </div>
@@ -77,7 +79,7 @@ const ProfileSettings = () => {
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Save Changes</button>
+                <button type="button" onClick={() => notify('Profile changes saved (demo mode).')} className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Save Changes</button>
               </div>
             </form>
           </div>
@@ -104,7 +106,7 @@ const ProfileSettings = () => {
                 <input type="password" placeholder="Confirm new password" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Update Password</button>
+                <button type="button" onClick={() => notify('Password update queued (demo mode).')} className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Update Password</button>
               </div>
             </form>
           </div>
@@ -161,7 +163,7 @@ const ProfileSettings = () => {
               </div>
             </div>
             
-            <button style={{ width: '100%', marginTop: '1.5rem', padding: '0.75rem', background: 'none', border: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>View All Activity</button>
+            <button onClick={() => notify('Full activity feed will be available soon.')} style={{ width: '100%', marginTop: '1.5rem', padding: '0.75rem', background: 'none', border: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>View All Activity</button>
           </div>
 
           {/* Danger Zone */}
@@ -172,7 +174,7 @@ const ProfileSettings = () => {
             <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: 1.5 }}>
               Once you delete your account, there is no going back. Please be certain.
             </p>
-            <button className="btn" style={{ width: '100%', background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            <button onClick={() => notify('Account deletion is disabled in demo mode.')} className="btn" style={{ width: '100%', background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
               <Trash2 size={16} /> Delete Account
             </button>
           </div>

@@ -12,6 +12,12 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleDemoSso = () => {
+    localStorage.setItem('sl_token', 'demo-token');
+    localStorage.setItem('sl_user', JSON.stringify({ name: 'Demo SSO User', email: 'sso-demo@company.com' }));
+    navigate('/dashboard');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -157,13 +163,13 @@ const Login = () => {
               <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
             </div>
 
-            <button className="btn btn-outline" style={{ width: '100%', color: '#1e293b', gap: '0.75rem' }}>
+            <button onClick={handleDemoSso} className="btn btn-outline" style={{ width: '100%', color: '#1e293b', gap: '0.75rem' }}>
               <Building2 size={20} />
               Enterprise SSO
             </button>
 
             <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: '#64748b' }}>
-              Don't have an account? <a href="#" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
+              Don't have an account? <a href="mailto:sales@sentinel-law.com" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
             </div>
           </div>
         </motion.div>

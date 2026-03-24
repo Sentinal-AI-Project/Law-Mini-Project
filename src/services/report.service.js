@@ -1,32 +1,28 @@
-const Finding = require('../models/Finding');
-const Report = require('../models/Report');
+const supabase = require('../config/supabase');
 
 /**
  * Generate a compliance report for findings within a date range.
- * Aggregates finding counts by severity and creates a Report record.
+ * Aggregates finding counts by severity and creates a report row.
  */
-exports.generateReport = async ({ userId, startDate, endDate }) => {
-    const dateFilter = {
-        created_at: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
-        },
-    };
+exports.generateReport = async ({ userId, startDate, endDate, framework, documentId }) => {
+    const startIso = new Date(`${startDate}T00:00:00.000Z`).toISOString();
+    const endIso = new Date(`${endDate}T23:59:59.999Z`).toISOString();
 
-    // Aggregate findings by severity
-    const pipeline = [
-        { $match: dateFilter },
-        {
-            $group: {
-                _id: '$severity',
-                count: { $sum: 1 },
-            },
-        },
-    ];
+    let findingsQuery = supabase
+        .from('findings')
+        .select('severity, created_at, policy_ref_id, document_id')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso);
 
-    const severityCounts = await Finding.aggregate(pipeline);
+    if (documentId) {
+        findingsQuery = findingsQuery.eq('document_id', documentId);
+    }
 
-    // Build count map
+    const { data: findings, error: findingsError } = await findingsQuery;
+    if (findingsError) {
+        throw findingsError;
+    }
+
     const countMap = {
         critical: 0,
         high: 0,
@@ -34,27 +30,33 @@ exports.generateReport = async ({ userId, startDate, endDate }) => {
         low: 0,
     };
 
-    let totalFindings = 0;
-    for (const item of severityCounts) {
-        if (countMap.hasOwnProperty(item._id)) {
-            countMap[item._id] = item.count;
+    for (const item of findings || []) {
+        if (Object.prototype.hasOwnProperty.call(countMap, item.severity)) {
+            countMap[item.severity] += 1;
         }
-        totalFindings += item.count;
     }
 
-    // Create the report record
-    const report = await Report.create({
-        generated_by: userId,
-        date_range: {
-            start: new Date(startDate),
-            end: new Date(endDate),
-        },
-        total_findings: totalFindings,
-        critical_count: countMap.critical,
-        high_count: countMap.high,
-        medium_count: countMap.medium,
-        low_count: countMap.low,
-    });
+    const totalFindings = (findings || []).length;
+
+    const { data: report, error: insertError } = await supabase
+        .from('reports')
+        .insert({
+            generated_by: userId,
+            start_date: startDate,
+            end_date: endDate,
+            framework: framework || null,
+            total_findings: totalFindings,
+            critical_count: countMap.critical,
+            high_count: countMap.high,
+            medium_count: countMap.medium,
+            low_count: countMap.low,
+        })
+        .select('id, generated_by, start_date, end_date, framework, total_findings, critical_count, high_count, medium_count, low_count, file_url, created_at')
+        .single();
+
+    if (insertError) {
+        throw insertError;
+    }
 
     return report;
 };
@@ -63,17 +65,48 @@ exports.generateReport = async ({ userId, startDate, endDate }) => {
  * Get detailed findings for a specific report's date range.
  */
 exports.getReportDetails = async (reportId) => {
-    const report = await Report.findById(reportId).populate('generated_by', 'name email');
+    const { data: report, error: reportError } = await supabase
+        .from('reports')
+        .select('id, generated_by, start_date, end_date, framework, total_findings, critical_count, high_count, medium_count, low_count, file_url, created_at')
+        .eq('id', reportId)
+        .maybeSingle();
+
+    if (reportError) {
+        throw reportError;
+    }
+
     if (!report) return null;
 
-    const findings = await Finding.find({
-        created_at: {
-            $gte: report.date_range.start,
-            $lte: report.date_range.end,
-        },
-    })
-        .populate('document_id', 'filename doc_type')
-        .sort({ severity: 1, confidence: -1 });
+    const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .eq('id', report.generated_by)
+        .maybeSingle();
 
-    return { report, findings };
+    if (userError) {
+        throw userError;
+    }
+
+    const startIso = new Date(`${report.start_date}T00:00:00.000Z`).toISOString();
+    const endIso = new Date(`${report.end_date}T23:59:59.999Z`).toISOString();
+
+    const { data: findings, error: findingsError } = await supabase
+        .from('findings')
+        .select('id, document_id, severity, confidence, risk_type, description, evidence_snippet, policy_ref_id, clause_id, created_at')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso)
+        .order('created_at', { ascending: false });
+
+    if (findingsError) {
+        throw findingsError;
+    }
+
+    return {
+        report: {
+            ...report,
+            _id: report.id,
+            generated_by: user ? { ...user, _id: user.id } : null,
+        },
+        findings: (findings || []).map((f) => ({ ...f, _id: f.id })),
+    };
 };

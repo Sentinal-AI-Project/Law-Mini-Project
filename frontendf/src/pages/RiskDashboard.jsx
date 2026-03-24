@@ -1,8 +1,11 @@
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { ShieldAlert, AlertTriangle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const RiskDashboard = () => {
+  const navigate = useNavigate();
+
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
@@ -69,7 +72,7 @@ const RiskDashboard = () => {
       <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Recent Activity</h2>
-          <button style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
+          <button onClick={() => navigate('/findings')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
             View All <ArrowRight size={16} />
           </button>
         </div>

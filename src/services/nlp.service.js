@@ -1,7 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
-const Finding = require('../models/Finding');
-const Document = require('../models/Document');
+const supabase = require('../config/supabase');
 
 const NLP_SERVICE_URL = process.env.NLP_SERVICE_URL || 'http://localhost:5001';
 
@@ -11,28 +10,27 @@ const NLP_SERVICE_URL = process.env.NLP_SERVICE_URL || 'http://localhost:5001';
  * saves returned findings, and updates document status.
  */
 exports.analyze = async (doc) => {
+    const docId = doc.id || doc._id;
+
     try {
-        // Read the file content
         const fileText = fs.readFileSync(doc.source_url, 'utf-8');
 
-        // Call the Python AI microservice
         const { data } = await axios.post(`${NLP_SERVICE_URL}/analyze`, {
-            doc_id: doc._id.toString(),
+            doc_id: String(docId),
             text: fileText,
             frameworks: ['GDPR', 'HIPAA'],
         }, {
-            timeout: 120000, // 2 minute timeout for large documents
+            timeout: 120000,
         });
 
         if (!data.findings || !Array.isArray(data.findings)) {
             throw new Error('Invalid response from NLP service — no findings array');
         }
 
-        // Filter findings by confidence threshold ≥ 0.7
         const validFindings = data.findings
-            .filter(f => f.confidence >= 0.7)
-            .map(f => ({
-                document_id: doc._id,
+            .filter((f) => Number(f.confidence) >= 0.7)
+            .map((f) => ({
+                document_id: docId,
                 risk_type: f.risk_type,
                 severity: f.severity,
                 confidence: f.confidence,
@@ -43,14 +41,28 @@ exports.analyze = async (doc) => {
             }));
 
         if (validFindings.length > 0) {
-            await Finding.insertMany(validFindings);
+            const { error: insertError } = await supabase.from('findings').insert(validFindings);
+            if (insertError) {
+                throw insertError;
+            }
         }
 
-        await Document.findByIdAndUpdate(doc._id, { status: 'completed' });
-        console.log(`✅ Analysis completed for document ${doc._id} — ${validFindings.length} findings saved`);
+        const { error: updateError } = await supabase
+            .from('documents')
+            .update({ status: 'analyzed' })
+            .eq('id', docId);
 
+        if (updateError) {
+            throw updateError;
+        }
+
+        console.log(`Analysis completed for document ${docId} - ${validFindings.length} findings saved`);
     } catch (err) {
-        await Document.findByIdAndUpdate(doc._id, { status: 'failed' });
-        console.error(`❌ NLP analysis failed for document ${doc._id}:`, err.message);
+        await supabase
+            .from('documents')
+            .update({ status: 'failed' })
+            .eq('id', docId);
+
+        console.error(`NLP analysis failed for document ${docId}: ${err.message}`);
     }
 };

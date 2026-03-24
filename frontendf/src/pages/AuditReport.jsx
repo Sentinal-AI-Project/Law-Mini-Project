@@ -42,6 +42,26 @@ const AuditReport = () => {
     }
   };
 
+  const downloadTextFile = (filename, content) => {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportPdf = () => {
+    downloadTextFile('executive-audit-report.pdf.txt', 'Demo export: PDF content placeholder for audit report.');
+  };
+
+  const handleExportCsv = () => {
+    downloadTextFile('audit-report-summary.csv', 'severity,count\ncritical,3\nhigh,12\nmedium,28\nlow,45\n');
+  };
+
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
@@ -120,10 +140,10 @@ const AuditReport = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Report Preview</h2>
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <button className="btn" style={{ background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <button onClick={handleExportPdf} className="btn" style={{ background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                    <DownloadCloud size={16} /> Export PDF
                 </button>
-                <button className="btn" style={{ background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <button onClick={handleExportCsv} className="btn" style={{ background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                    <FileText size={16} /> Export CSV
                 </button>
               </div>

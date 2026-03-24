@@ -1,8 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Calendar, FileText, DownloadCloud, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
+import { reportsAPI, docsAPI } from '../services/api';
 
 const AuditReport = () => {
+  const [reports, setReports] = useState([]);
+  const [docs, setDocs] = useState([]);
+  const [selectedDoc, setSelectedDoc] = useState('');
+  const [framework, setFramework] = useState('GDPR');
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rData, dData] = await Promise.allSettled([
+          reportsAPI.list(),
+          docsAPI.list({ limit: 50, status: 'analyzed' }),
+        ]);
+        if (rData.status === 'fulfilled') setReports(rData.value.reports || []);
+        if (dData.status === 'fulfilled') setDocs(dData.value.documents || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleGenerate = async () => {
+    if (!selectedDoc) return;
+    setGenerating(true);
+    setGenerateError('');
+    try {
+      const data = await reportsAPI.generate(selectedDoc, framework);
+      setReports((prev) => [data, ...prev]);
+    } catch (err) {
+      setGenerateError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
@@ -32,36 +71,45 @@ const AuditReport = () => {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Compliance Framework</label>
-              <select style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem' }}>
-                <option>SOX (Sarbanes-Oxley)</option>
-                <option>GDPR</option>
-                <option>HIPAA</option>
+              <select
+                value={framework}
+                onChange={(e) => setFramework(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem' }}
+              >
+                <option value="SOX">SOX (Sarbanes-Oxley)</option>
+                <option value="GDPR">GDPR</option>
+                <option value="HIPAA">HIPAA</option>
               </select>
             </div>
 
             <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '1rem' }}>Select Documents</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { name: 'Financial Controls Policy', checked: true, type: 'docx' },
-                  { name: 'Data Privacy Procedures', checked: true, type: 'docx' },
-                  { name: 'Security Assessment Report', checked: false, type: 'pdf' },
-                  { name: 'Risk Management Framework', checked: true, type: 'pdf' },
-                  { name: 'Incident Response Plan', checked: false, type: 'docx' },
-                ].map((doc, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <input type="checkbox" defaultChecked={doc.checked} id={`doc-${i}`} style={{ width: '16px', height: '16px', accentColor: '#2563eb' }} />
-                    <label htmlFor={`doc-${i}`} style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                      <FileText size={16} color={doc.checked ? '#3b82f6' : '#94a3b8'} />
-                      <span>{doc.name}</span>
-                    </label>
-                  </div>
+              <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Select Document</label>
+              <select
+                value={selectedDoc}
+                onChange={(e) => setSelectedDoc(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem' }}
+              >
+                <option value="">— select a document —</option>
+                {docs.map((d) => (
+                  <option key={d._id} value={d._id}>{d.filename}</option>
                 ))}
-              </div>
+              </select>
+              {loading && <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>Loading documents…</p>}
             </div>
 
-            <button className="btn btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: '#2563eb', color: '#fff', padding: '0.8rem' }}>
-              <FileText size={18} /> Generate Report
+            {generateError && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '6px', padding: '0.75rem', color: '#dc2626', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                {generateError}
+              </div>
+            )}
+
+            <button
+              className="btn btn-primary"
+              onClick={handleGenerate}
+              disabled={generating || !selectedDoc}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: '#2563eb', color: '#fff', padding: '0.8rem', opacity: (generating || !selectedDoc) ? 0.7 : 1 }}
+            >
+              <FileText size={18} /> {generating ? 'Generating…' : 'Generate Report'}
             </button>
           </div>
         </div>
@@ -168,6 +216,24 @@ const AuditReport = () => {
                  </div>
                </div>
             </div>
+
+            {/* Generated Reports */}
+            {reports.length > 0 && (
+              <div style={{ marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                <h3 style={{ fontSize: '1rem', color: '#1e293b', marginBottom: '1rem' }}>Generated Reports</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {reports.map((r, idx) => (
+                    <div key={r._id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <div>
+                        <div style={{ fontWeight: 500, fontSize: '0.9rem', color: '#1e293b' }}>Report — {r.framework || framework}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{r.created_at ? new Date(r.created_at).toLocaleString() : 'Just now'}</div>
+                      </div>
+                      <CheckCircle2 size={18} color="#10b981" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

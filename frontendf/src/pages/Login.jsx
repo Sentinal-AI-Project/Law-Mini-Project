@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ShieldCheck, Mail, Lock, CheckCircle2, Building2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#fff' }}>
       {/* Left side - Blue Gradient */}
@@ -79,40 +101,56 @@ const Login = () => {
               <span style={{ color: '#065f46', fontSize: '0.9rem', fontWeight: 500 }}>Secure Enterprise Login</span>
             </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input 
-                  type="email" 
-                  placeholder="you@company.com" 
-                  style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
-                />
+            {error && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '0.75rem 1rem', color: '#dc2626', fontSize: '0.9rem' }}>
+                {error}
               </div>
-            </div>
+            )}
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label style={{ color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>Password</label>
-                <Link to="/forgot-password" style={{ color: '#3b82f6', fontSize: '0.9rem', fontWeight: 600 }}>Forgot password?</Link>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
+                  />
+                </div>
               </div>
-              <div style={{ position: 'relative' }}>
-                <Lock size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input 
-                  type="password" 
-                  placeholder="Enter your password" 
-                  style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
-                />
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label style={{ color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>Password</label>
+                  <Link to="/forgot-password" style={{ color: '#3b82f6', fontSize: '0.9rem', fontWeight: 600 }}>Forgot password?</Link>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input type="checkbox" id="remember" />
-              <label htmlFor="remember" style={{ color: '#64748b', fontSize: '0.9rem' }}>Remember me</label>
-            </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '0.9rem', opacity: loading ? 0.7 : 1 }}
+              >
+                {loading ? 'Signing in…' : 'Sign In'}
+              </button>
+            </form>
 
-            <Link to="/dashboard" className="btn btn-secondary" style={{ width: '100%', padding: '0.9rem' }}>Sign In</Link>
-            
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#94a3b8', fontSize: '0.8rem', margin: '1rem 0' }}>
               <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
               <span>OR CONTINUE WITH</span>
@@ -123,7 +161,7 @@ const Login = () => {
               <Building2 size={20} />
               Enterprise SSO
             </button>
-            
+
             <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: '#64748b' }}>
               Don't have an account? <a href="#" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
             </div>

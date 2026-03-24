@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Search, Filter, Plus, FileText, FileSpreadsheet, Eye, Download, CheckCircle, Clock } from 'lucide-react';
+import { docsAPI } from '../services/api';
+import { Link } from 'react-router-dom';
 
 const DocumentLibrary = () => {
-  const documents = [
-    { name: 'Security Policy 2024.pdf', size: '2.4 MB', type: 'PDF', user: 'John Smith', date: 'Mar 15, 2024', status: 'Completed', findings: 23, risk: 'Critical' },
-    { name: 'Compliance Report Q1.docx', size: '1.8 MB', type: 'DOCX', user: 'Emily Davis', date: 'Mar 14, 2024', status: 'Processing', findings: '-', risk: 'Pending' },
-    { name: 'Risk Assessment Matrix.xlsx', size: '945 KB', type: 'XLSX', user: 'Mike Wilson', date: 'Mar 13, 2024', status: 'Completed', findings: 8, risk: 'Medium' },
-  ];
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        const data = await docsAPI.list({ limit: 50 });
+        setDocuments(data.documents || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocs();
+  }, []);
+
+  const filtered = documents.filter((d) =>
+    d.filename?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <DashboardLayout>
@@ -27,7 +46,13 @@ const DocumentLibrary = () => {
              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Search Documents</label>
              <div style={{ position: 'relative' }}>
                <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-               <input type="text" placeholder="Search by document name..." style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+               <input
+                type="text"
+                placeholder="Search by document name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+              />
              </div>
           </div>
           <div>
@@ -51,7 +76,7 @@ const DocumentLibrary = () => {
 
       <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
-          <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Documents <span style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 'normal' }}>(247 total)</span></h2>
+          <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Documents <span style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 'normal' }}>({filtered.length} total)</span></h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Show:</span>
             <select style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff' }}>
@@ -75,58 +100,56 @@ const DocumentLibrary = () => {
             </tr>
           </thead>
           <tbody>
-            {documents.map((doc, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#1e293b' }}>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {doc.type === 'PDF' && <FileText color="#ef4444" />}
-                    {doc.type === 'DOCX' && <FileText color="#3b82f6" />}
-                    {doc.type === 'XLSX' && <FileSpreadsheet color="#10b981" />}
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{doc.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{doc.size}</div>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <span style={{ padding: '0.25rem 0.5rem', background: '#f1f5f9', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>{doc.type}</span>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${doc.user}`} alt={doc.user} style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f1f5f9' }} />
-                    <span style={{ fontSize: '0.9rem' }}>{doc.user}</span>
-                  </div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: '#475569' }}>{doc.date}</td>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  {doc.status === 'Completed' ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
-                      <CheckCircle size={14} /> Completed
-                    </span>
-                  ) : (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#fef3c7', color: '#d97706', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
-                      <Clock size={14} /> Processing
-                    </span>
-                  )}
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 500 }}>{doc.findings}</td>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <span style={{ 
-                    padding: '0.25rem 0.75rem', 
-                    borderRadius: '20px', 
-                    fontSize: '0.8rem', 
-                    fontWeight: 600,
-                    background: doc.risk === 'Critical' ? '#fee2e2' : doc.risk === 'Medium' ? '#fef3c7' : '#f1f5f9',
-                    color: doc.risk === 'Critical' ? '#dc2626' : doc.risk === 'Medium' ? '#d97706' : '#64748b'
-                  }}>{doc.risk}</span>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: '#94a3b8' }}>
-                    <button style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
-                    <button style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Download size={18} /></button>
-                  </div>
-                </td>
-              </tr>
+            {loading && (
+              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading documents…</td></tr>
+            )}
+            {!loading && error && (
+              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#dc2626' }}>{error}</td></tr>
+            )}
+            {!loading && !error && filtered.length === 0 && (
+              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>No documents found. <Link to="/upload" style={{ color: '#2563eb' }}>Upload your first document.</Link></td></tr>
+            )}
+            {!loading && filtered.map((doc, idx) => (
+               <tr key={doc._id || idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#1e293b' }}>
+                 <td style={{ padding: '1.25rem 1.5rem' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                     <FileText color="#ef4444" />
+                     <div>
+                       <div style={{ fontWeight: 500 }}>{doc.filename}</div>
+                       <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{doc.doc_type}</div>
+                     </div>
+                   </div>
+                 </td>
+                 <td style={{ padding: '1.25rem 1.5rem' }}>
+                   <span style={{ padding: '0.25rem 0.5rem', background: '#f1f5f9', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>
+                     {doc.filename?.split('.').pop()?.toUpperCase() || '—'}
+                   </span>
+                 </td>
+                 <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: '#475569' }}>—</td>
+                 <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: '#475569' }}>
+                   {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : '—'}
+                 </td>
+                 <td style={{ padding: '1.25rem 1.5rem' }}>
+                   {doc.status === 'analyzed' ? (
+                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
+                       <CheckCircle size={14} /> Completed
+                     </span>
+                   ) : (
+                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#fef3c7', color: '#d97706', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
+                       <Clock size={14} /> {doc.status || 'Pending'}
+                     </span>
+                   )}
+                 </td>
+                 <td style={{ padding: '1.25rem 1.5rem', fontWeight: 500 }}>—</td>
+                 <td style={{ padding: '1.25rem 1.5rem' }}>
+                   <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, background: '#f1f5f9', color: '#64748b' }}>—</span>
+                 </td>
+                 <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: '#94a3b8' }}>
+                     <button style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
+                   </div>
+                 </td>
+               </tr>
             ))}
           </tbody>
         </table>

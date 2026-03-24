@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText, AlertTriangle, HelpCircle, Clock } from 'lucide-react';
+import { complianceAPI, findingsAPI } from '../services/api';
 
 const ComplianceDashboard = () => {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [dashData, findingStats] = await Promise.allSettled([
+          complianceAPI.dashboard(),
+          findingsAPI.stats(),
+        ]);
+        setStats({
+          dashboard: dashData.status === 'fulfilled' ? dashData.value : null,
+          findings: findingStats.status === 'fulfilled' ? findingStats.value : null,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
   return (
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -40,31 +61,39 @@ const ComplianceDashboard = () => {
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <div>
              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Documents</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>1,247</div>
-             <div style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 500 }}>+12% from last month</div>
+             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
+               {loading ? '—' : (stats?.dashboard?.totalDocuments ?? '—')}
+             </div>
+             <div style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 500 }}>All uploaded documents</div>
            </div>
            <div style={{ background: '#eff6ff', padding: '12px', borderRadius: '8px' }}><FileText size={20} color="#3b82f6" /></div>
         </div>
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <div>
              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Findings</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>89</div>
-             <div style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 500 }}>+5 new findings</div>
+             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
+               {loading ? '—' : (stats?.dashboard?.totalFindings ?? stats?.findings?.total ?? '—')}
+             </div>
+             <div style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 500 }}>Across all documents</div>
            </div>
            <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '8px' }}><AlertTriangle size={20} color="#dc2626" /></div>
         </div>
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <div>
              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Compliance Score</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>94%</div>
-             <div style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 500 }}>+2% improvement</div>
+             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
+               {loading ? '—' : (stats?.dashboard?.complianceScore != null ? `${stats.dashboard.complianceScore}%` : '—')}
+             </div>
+             <div style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 500 }}>Overall score</div>
            </div>
            <div style={{ background: '#ecfdf5', padding: '12px', borderRadius: '8px' }}><HelpCircle size={20} color="#10b981" /></div>
         </div>
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <div>
              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Processing</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>7</div>
+             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
+               {loading ? '—' : (stats?.dashboard?.processingCount ?? '—')}
+             </div>
              <div style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 500 }}>Documents in queue</div>
            </div>
            <div style={{ background: '#fffbeb', padding: '12px', borderRadius: '8px' }}><Clock size={20} color="#d97706" /></div>

@@ -13,7 +13,7 @@ import {
   Search,
   CheckCircle2
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const SidebarLink = ({ to, icon: Icon, label }) => {
@@ -43,6 +43,8 @@ const SidebarLink = ({ to, icon: Icon, label }) => {
 };
 
 const DashboardLayout = ({ children }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex" style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
       {/* Sidebar */}
@@ -77,7 +79,7 @@ const DashboardLayout = ({ children }) => {
         </nav>
 
         <div style={{ marginTop: 'auto', padding: '1rem' }}>
-          <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem' }}>
+          <button onClick={() => navigate('/login')} className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem' }}>
             <LogOut size={20} />
             <span>Logout</span>
           </button>

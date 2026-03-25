@@ -125,7 +125,7 @@ const Login = () => {
             </button>
             
             <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: '#64748b' }}>
-              Don't have an account? <a href="#" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
+              Don't have an account? <a href="/#contact" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
             </div>
           </div>
         </motion.div>

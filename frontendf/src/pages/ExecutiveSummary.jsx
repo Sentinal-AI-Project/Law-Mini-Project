@@ -7,7 +7,7 @@ const ExecutiveSummary = () => {
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#1e293b' }}>Executive Summary</h1>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Executive Summary</h1>
           <p style={{ color: 'var(--text-muted)' }}>Risk oversight and compliance monitoring</p>
         </div>
         <select style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>

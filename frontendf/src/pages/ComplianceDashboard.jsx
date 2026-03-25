@@ -7,8 +7,8 @@ const ComplianceDashboard = () => {
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', color: '#1e293b', marginBottom: '0.25rem' }}>Compliance Dashboard</h1>
-          <p style={{ color: '#64748b' }}>Monitor your compliance analysis in real-time</p>
+          <h1 style={{ fontSize: '1.75rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>Compliance Dashboard</h1>
+          <p style={{ color: 'var(--text-muted)' }}>Monitor your compliance analysis in real-time</p>
         </div>
         <select style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.95rem' }}>
           <option>SOX Framework</option>

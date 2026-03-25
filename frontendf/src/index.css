@@ -33,6 +33,12 @@ body {
   overflow-x: hidden;
 }
 
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -84,6 +90,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Layout Utilities */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
 .flex { display: flex; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
@@ -91,6 +102,12 @@ h1, h2, h3, h4, h5, h6 {
 .gap-4 { gap: 1rem; }
 .p-4 { padding: 1rem; }
 .m-b-4 { margin-bottom: 1rem; }
+
+/* Text Utilities */
+.text-teal { color: var(--accent-teal); }
+.text-muted { color: var(--text-muted); }
+.text-muted:hover { color: var(--text-main); }
+
 
 /* Buttons */
 .btn {

@@ -6,7 +6,7 @@ const AuditReport = () => {
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', color: '#1e293b' }}>Audit Report Generation</h1>
+        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Audit Report Generation</h1>
         <p style={{ color: 'var(--text-muted)' }}>Generate comprehensive compliance audit reports with risk analysis and findings summary.</p>
       </div>
 

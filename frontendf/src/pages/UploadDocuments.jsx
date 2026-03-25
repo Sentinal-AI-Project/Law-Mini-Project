@@ -11,7 +11,7 @@ const UploadDocuments = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#1e293b' }}>Upload Documents</h1>
+              <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Upload Documents</h1>
               <p style={{ color: 'var(--text-muted)' }}>Upload documents for compliance analysis</p>
             </div>
             <button className="btn btn-primary" style={{ background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

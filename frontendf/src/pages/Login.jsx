@@ -31,11 +31,11 @@ const Login = () => {
             Intelligent document analysis and compliance monitoring powered by advanced AI technology.
           </p>
           
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', marginTop: '1rem', minHeight: '300px' }}>
              <img 
-               src="https://framerusercontent.com/images/8r9m9T8yYtJ724R6xK2W6Z0g.png" 
+               src="/ai-illustration.png" 
                alt="AI Illustration" 
-               style={{ width: '100%', borderRadius: '24px', opacity: 0.9 }}
+               style={{ width: '100%', height: '100%', minHeight: '300px', objectFit: 'cover', borderRadius: '24px', opacity: 0.9, backgroundColor: 'rgba(255,255,255,0.1)' }}
              />
              {/* Read-only system badge matching image */}
              <div className="glass" style={{ 

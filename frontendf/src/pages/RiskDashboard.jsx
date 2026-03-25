@@ -6,8 +6,8 @@ const RiskDashboard = () => {
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', color: '#1e293b', marginBottom: '0.25rem' }}>Risk Dashboard</h1>
-        <p style={{ color: '#64748b' }}>Monitor and manage critical risk alerts in real-time</p>
+        <h1 style={{ fontSize: '1.75rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>Risk Dashboard</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Monitor and manage critical risk alerts in real-time</p>
       </div>
 
       {/* Summary Cards */}

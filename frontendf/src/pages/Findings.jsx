@@ -57,8 +57,8 @@ const Findings = () => {
                 <span style={{ color: '#dc2626', fontWeight: 600, fontSize: '0.9rem' }}>Data Breach</span>
                 <span style={{ color: '#475569', fontSize: '0.9rem' }}>Confidence: <span style={{ fontWeight: 700 }}>94%</span></span>
               </div>
-              <h1 style={{ fontSize: '1.75rem', color: '#1e293b', marginBottom: '0.5rem' }}>Unencrypted Personal Data Storage</h1>
-              <p style={{ color: '#64748b', fontSize: '1rem' }}>Customer PII stored without encryption in violation of GDPR Article 32</p>
+              <h1 style={{ fontSize: '1.75rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>Unencrypted Personal Data Storage</h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Customer PII stored without encryption in violation of GDPR Article 32</p>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', background: '#f1f5f9', border: 'none' }}>

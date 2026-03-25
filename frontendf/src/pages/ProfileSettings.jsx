@@ -1,12 +1,12 @@
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Camera, Edit2, ShieldAlert, Key, User, Download, Settings, Smartphone, Trash2 } from 'lucide-react';
+import { Camera, Edit2, ShieldAlert, Key, User, Download, Settings, Smartphone, Trash2, AlertTriangle } from 'lucide-react';
 
 const ProfileSettings = () => {
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#1e293b' }}>Profile Settings</h1>
+        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Profile Settings</h1>
         <p style={{ color: 'var(--text-muted)' }}>Manage your account information and preferences</p>
       </div>
 

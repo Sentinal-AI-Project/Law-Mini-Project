@@ -136,8 +136,8 @@ const DocumentLibrary = () => {
                 </td>
                 <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: '#94a3b8' }}>
-                    <button style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
-                    <button style={{ background: 'none', color: 'inherit', cursor: 'pointer' }}><Download size={18} /></button>
+                    <button style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
+                    <button style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Download size={18} /></button>
                   </div>
                 </td>
               </tr>

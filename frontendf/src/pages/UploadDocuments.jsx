@@ -167,7 +167,7 @@ const UploadDocuments = () => {
 
         {/* Right Sidebar - Upload History */}
         <div style={{ width: '380px', flexShrink: 0 }}>
-           <h3 style={{ fontSize: '1.25rem', color: '#1e293b', marginBottom: '1.5rem' }}>Upload History</h3>
+           <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)', marginBottom: '1.5rem' }}>Upload History</h3>
            
            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
              

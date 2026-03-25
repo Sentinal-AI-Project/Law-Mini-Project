@@ -1,13 +1,37 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Search, Filter, Plus, FileText, FileSpreadsheet, Eye, Download, CheckCircle, Clock } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 
 const DocumentLibrary = () => {
-  const documents = [
-    { name: 'Security Policy 2024.pdf', size: '2.4 MB', type: 'PDF', user: 'John Smith', date: 'Mar 15, 2024', status: 'Completed', findings: 23, risk: 'Critical' },
-    { name: 'Compliance Report Q1.docx', size: '1.8 MB', type: 'DOCX', user: 'Emily Davis', date: 'Mar 14, 2024', status: 'Processing', findings: '-', risk: 'Pending' },
-    { name: 'Risk Assessment Matrix.xlsx', size: '945 KB', type: 'XLSX', user: 'Mike Wilson', date: 'Mar 13, 2024', status: 'Completed', findings: 8, risk: 'Medium' },
-  ];
+  const [documents, setDocuments] = useState([
+    { id: 1, name: 'Security Policy 2024.pdf', size: '2.4 MB', type: 'PDF', user: 'John Smith', date: 'Mar 15, 2024', status: 'Completed', findings: 23, risk: 'Critical' },
+    { id: 2, name: 'Compliance Report Q1.docx', size: '1.8 MB', type: 'DOCX', user: 'Emily Davis', date: 'Mar 14, 2024', status: 'Processing', findings: '-', risk: 'Pending' },
+    { id: 3, name: 'Risk Assessment Matrix.xlsx', size: '945 KB', type: 'XLSX', user: 'Mike Wilson', date: 'Mar 13, 2024', status: 'Completed', findings: 8, risk: 'Medium' },
+  ]);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    const newDocs = files.map(file => {
+      const ext = file.name.split('.').pop().toUpperCase() || 'DOC';
+      return {
+        id: Math.random(),
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+        type: ext,
+        user: 'John Smith',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        status: 'Completed',
+        findings: 0,
+        risk: 'Low'
+      };
+    });
+    
+    setDocuments(prev => [...newDocs, ...prev]);
+  };
 
   return (
     <DashboardLayout>
@@ -16,7 +40,8 @@ const DocumentLibrary = () => {
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Document Library</h1>
           <p style={{ color: 'var(--text-muted)' }}>Manage and review your security documents</p>
         </div>
-        <button className="btn btn-secondary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <button onClick={() => fileInputRef.current?.click()} className="btn btn-secondary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer' }}>
+          <input type="file" multiple ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
           <Plus size={20} /> Upload Document
         </button>
       </div>
@@ -32,19 +57,11 @@ const DocumentLibrary = () => {
           </div>
           <div>
              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Date Range</label>
-             <select style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-               <option>All Time</option>
-               <option>Last 7 Days</option>
-               <option>Last 30 Days</option>
-             </select>
+             <CustomDropdown options={['All Time', 'Last 7 Days', 'Last 30 Days']} width="100%" />
           </div>
           <div>
              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Risk Level</label>
-             <select style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-               <option>All Levels</option>
-               <option>Critical</option>
-               <option>High</option>
-             </select>
+             <CustomDropdown options={['All Levels', 'Critical', 'High']} width="100%" />
           </div>
         </div>
       </div>
@@ -54,10 +71,7 @@ const DocumentLibrary = () => {
           <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Documents <span style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 'normal' }}>(247 total)</span></h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Show:</span>
-            <select style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff' }}>
-              <option>25</option>
-              <option>50</option>
-            </select>
+            <CustomDropdown options={['25', '50']} width="80px" />
           </div>
         </div>
         
@@ -75,8 +89,8 @@ const DocumentLibrary = () => {
             </tr>
           </thead>
           <tbody>
-            {documents.map((doc, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#1e293b' }}>
+            {documents.map((doc) => (
+              <tr key={doc.id} style={{ borderBottom: '1px solid #e2e8f0', color: '#1e293b' }}>
                 <td style={{ padding: '1.25rem 1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     {doc.type === 'PDF' && <FileText color="#ef4444" />}

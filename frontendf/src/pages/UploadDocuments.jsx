@@ -1,8 +1,50 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Info, UploadCloud, FileText, CheckCircle2, AlertTriangle, AlertCircle, Play, X } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 
 const UploadDocuments = () => {
+  const [uploadedFiles, setUploadedFiles] = useState([
+    { id: 1, name: 'privacy_policy_2024.pdf', size: '2.4 MB', type: 'Policy Document', status: 'Completed', progress: 100 },
+    { id: 2, name: 'vendor_contract_acme.docx', size: '1.8 MB', type: 'Contract', status: 'In Progress', progress: 65 },
+    { id: 3, name: 'large_file.xlsx', size: '12 MB', type: 'Spreadsheet', status: 'Error', progress: 0, error: 'File size exceeds 10MB limit' }
+  ]);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const newFiles = files.map(file => ({
+      id: Math.random(),
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+      type: 'Document',
+      status: 'Completed',
+      progress: 100
+    }));
+    setUploadedFiles(prev => [...newFiles, ...prev]);
+  };
+
+  const handleDragOver = (e) => e.preventDefault();
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      const newFiles = files.map(file => ({
+        id: Math.random(),
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+        type: 'Document',
+        status: 'Completed',
+        progress: 100
+      }));
+      setUploadedFiles(prev => [...newFiles, ...prev]);
+    }
+  };
+
+  const removeFile = (id) => setUploadedFiles(prev => prev.filter(f => f.id !== id));
+
   return (
     <DashboardLayout>
       <div style={{ display: 'flex', gap: '2rem' }}>
@@ -28,16 +70,17 @@ const UploadDocuments = () => {
 
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 600, color: '#1e293b', fontSize: '1.1rem' }}>Compliance Framework</label>
-            <select style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.95rem', color: '#475569' }}>
-               <option>Select Framework</option>
-               <option>SOC 2</option>
-               <option>GDPR</option>
-               <option>HIPAA</option>
-               <option>ISO 27001</option>
-            </select>
+            <CustomDropdown options={['Select Framework', 'SOC 2', 'GDPR', 'HIPAA', 'ISO 27001']} width="100%" />
           </div>
 
-          <div className="card" style={{ background: '#fff', border: '1px dashed #cbd5e1', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <div 
+            className="card" 
+            style={{ background: '#fff', border: '1px dashed #cbd5e1', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+             <input type="file" multiple ref={fileInputRef} onChange={handleFileSelect} style={{ display: 'none' }} />
              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
                <UploadCloud size={32} color="#64748b" />
              </div>
@@ -50,64 +93,74 @@ const UploadDocuments = () => {
 
           {/* Uploaded Files List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Completed */}
-            <div style={{ background: '#ecfdf5', border: '1px solid #d1fae5', borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                 <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <FileText size={20} />
-                 </div>
-                 <div>
-                   <div style={{ fontWeight: 600, color: '#065f46', fontSize: '0.95rem' }}>privacy_policy_2024.pdf</div>
-                   <div style={{ fontSize: '0.8rem', color: '#059669' }}>2.4 MB • Policy Document</div>
-                 </div>
-               </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', color: '#059669', fontWeight: 500 }}>
-                   <CheckCircle2 size={16} /> Uploaded
-                 </span>
-                 <X size={16} color="#059669" style={{ cursor: 'pointer' }} />
-               </div>
-            </div>
-
-            {/* In Progress */}
-            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                 <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <FileText size={20} />
-                 </div>
-                 <div>
-                   <div style={{ fontWeight: 600, color: '#1e3a8a', fontSize: '0.95rem' }}>vendor_contract_acme.docx</div>
-                   <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>1.8 MB • Contract</div>
-                 </div>
-               </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', width: '200px' }}>
-                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                   <div style={{ width: '100%', height: '6px', background: '#dbeafe', borderRadius: '3px', overflow: 'hidden' }}>
-                     <div style={{ width: '65%', height: '100%', background: '#2563eb' }}></div>
-                   </div>
-                   <span style={{ fontSize: '0.85rem', color: '#2563eb', fontWeight: 600 }}>65%</span>
-                 </div>
-               </div>
-            </div>
-
-            {/* Error */}
-            <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                 <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <FileText size={20} />
-                 </div>
-                 <div>
-                   <div style={{ fontWeight: 600, color: '#991b1b', fontSize: '0.95rem' }}>large_file.xlsx</div>
-                   <div style={{ fontSize: '0.8rem', color: '#dc2626' }}>File size exceeds 10MB limit</div>
-                 </div>
-               </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', color: '#dc2626', fontWeight: 500 }}>
-                   <AlertTriangle size={16} /> Error
-                 </span>
-                 <X size={16} color="#dc2626" style={{ cursor: 'pointer' }} />
-               </div>
-            </div>
+            {uploadedFiles.map(file => {
+              if (file.status === 'Completed') {
+                return (
+                  <div key={file.id} style={{ background: '#ecfdf5', border: '1px solid #d1fae5', borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         <FileText size={20} />
+                       </div>
+                       <div>
+                         <div style={{ fontWeight: 600, color: '#065f46', fontSize: '0.95rem' }}>{file.name}</div>
+                         <div style={{ fontSize: '0.8rem', color: '#059669' }}>{file.size} • {file.type}</div>
+                       </div>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', color: '#059669', fontWeight: 500 }}>
+                         <CheckCircle2 size={16} /> Uploaded
+                       </span>
+                       <X size={16} color="#059669" style={{ cursor: 'pointer' }} onClick={() => removeFile(file.id)} />
+                     </div>
+                  </div>
+                );
+              }
+              if (file.status === 'In Progress') {
+                return (
+                  <div key={file.id} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         <FileText size={20} />
+                       </div>
+                       <div>
+                         <div style={{ fontWeight: 600, color: '#1e3a8a', fontSize: '0.95rem' }}>{file.name}</div>
+                         <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>{file.size} • {file.type}</div>
+                       </div>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', width: '200px' }}>
+                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                         <div style={{ width: '100%', height: '6px', background: '#dbeafe', borderRadius: '3px', overflow: 'hidden' }}>
+                           <div style={{ width: `${file.progress}%`, height: '100%', background: '#2563eb' }}></div>
+                         </div>
+                         <span style={{ fontSize: '0.85rem', color: '#2563eb', fontWeight: 600 }}>{file.progress}%</span>
+                       </div>
+                     </div>
+                  </div>
+                );
+              }
+              if (file.status === 'Error') {
+                return (
+                  <div key={file.id} style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         <FileText size={20} />
+                       </div>
+                       <div>
+                         <div style={{ fontWeight: 600, color: '#991b1b', fontSize: '0.95rem' }}>{file.name}</div>
+                         <div style={{ fontSize: '0.8rem', color: '#dc2626' }}>{file.error}</div>
+                       </div>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', color: '#dc2626', fontWeight: 500 }}>
+                         <AlertTriangle size={16} /> Error
+                       </span>
+                       <X size={16} color="#dc2626" style={{ cursor: 'pointer' }} onClick={() => removeFile(file.id)} />
+                     </div>
+                  </div>
+                );
+              }
+              return null;
+            })}
 
           </div>
         </div>

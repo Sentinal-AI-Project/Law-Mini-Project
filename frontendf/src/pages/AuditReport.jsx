@@ -1,6 +1,7 @@
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Calendar, FileText, DownloadCloud, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 
 const AuditReport = () => {
   return (
@@ -32,11 +33,7 @@ const AuditReport = () => {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Compliance Framework</label>
-              <select style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem' }}>
-                <option>SOX (Sarbanes-Oxley)</option>
-                <option>GDPR</option>
-                <option>HIPAA</option>
-              </select>
+              <CustomDropdown options={['SOX (Sarbanes-Oxley)', 'GDPR', 'HIPAA']} width="100%" />
             </div>
 
             <div style={{ marginBottom: '2rem' }}>

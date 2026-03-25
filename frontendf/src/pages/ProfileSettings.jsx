@@ -1,6 +1,7 @@
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Camera, Edit2, ShieldAlert, Key, User, Download, Settings, Smartphone, Trash2, AlertTriangle } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 
 const ProfileSettings = () => {
   return (
@@ -65,11 +66,7 @@ const ProfileSettings = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Role</label>
-                  <select style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                    <option>Analyst</option>
-                    <option>Manager</option>
-                    <option>Admin</option>
-                  </select>
+                  <CustomDropdown options={['Analyst', 'Manager', 'Admin']} width="100%" />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Department</label>

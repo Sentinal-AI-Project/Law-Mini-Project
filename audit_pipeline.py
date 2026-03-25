@@ -34,6 +34,16 @@ def enrich_rule(clause):
 
 
 # =========================
+# 🔹 NEW: KEYWORD OVERLAP
+# =========================
+def get_overlap(clause, rule):
+    clause_words = set(clause.lower().split())
+    rule_words = set(rule.lower().split())
+    overlap = clause_words.intersection(rule_words)
+    return list(overlap)[:5]
+
+
+# =========================
 # 🔹 LOAD CUAD RULES (CACHED)
 # =========================
 def load_cuad_rules(cuad_path="CUAD_v1.json"):
@@ -59,7 +69,6 @@ def load_cuad_rules(cuad_path="CUAD_v1.json"):
                         clauses.append(text)
 
     clauses = list(set(clauses))
-
     clauses = clauses[:3000]
 
     rules = []
@@ -112,7 +121,7 @@ def extract_text_from_pdf(file_path):
 
 
 # =========================
-# 🔹 TEXT → CLAUSES (FIXED)
+# 🔹 TEXT → CLAUSES
 # =========================
 def segment_clauses(text):
     text = text.replace("\n", ". ")
@@ -182,36 +191,101 @@ def run_audit(contract_path, policy_path=None):
         best_score = top_results.values[0].item()
 
         rule = all_rules[best_idx]
+        matched_rule_text = rule["description"]
 
+        overlap_words = get_overlap(clause, matched_rule_text)
+
+        # 🔹 Confidence label
+        if best_score > 0.75:
+            confidence_label = "High confidence match"
+        elif best_score > 0.5:
+            confidence_label = "Moderate confidence"
+        else:
+            confidence_label = "Low confidence"
+
+        # 🔹 RAG-style explanation
         if best_score < 0.4:
             risk = True
-            explanation = "This clause significantly deviates from standard legal patterns."
+            explanation = f"""
+This clause is flagged as HIGH RISK.
+
+Clause:
+"{clause}"
+
+Relevant Policy:
+"{matched_rule_text}"
+
+Reason:
+The clause significantly deviates from standard legal clauses and may introduce compliance issues.
+"""
+
         elif best_score < 0.6:
             risk = True
-            explanation = "This clause partially matches standard clauses and may need review."
+            explanation = f"""
+This clause is flagged as MEDIUM RISK.
+
+Clause:
+"{clause}"
+
+Relevant Policy:
+"{matched_rule_text}"
+
+Reason:
+The clause partially aligns with known policies but lacks clarity or completeness.
+"""
+
         else:
             risk = False
-            explanation = "This clause appears consistent with standard legal practices."
+            explanation = f"""
+This clause is SAFE.
 
+Clause:
+"{clause}"
+
+Matched Policy:
+"{matched_rule_text}"
+
+Reason:
+The clause closely matches standard legal language and appears compliant.
+"""
+
+        # 🔥 Special rule
         if ("share" in clause.lower() and "data" in clause.lower() 
             and "consent" not in clause.lower()):
             risk = True
-            explanation = "This clause involves data sharing without clear user consent."
+            explanation = f"""
+🚨 DATA PRIVACY RISK DETECTED
+
+Clause:
+"{clause}"
+
+Issue:
+Data is being shared without explicit user consent.
+
+Impact:
+This may violate data protection regulations.
+
+Suggestion:
+Add a clear user consent clause before data sharing.
+"""
 
         if ("between" in clause.lower() and "and" in clause.lower()):
             risk = False
-            explanation = "This clause correctly defines the involved parties."
 
         if best_score > 0.75:
             risk = False
-            explanation = "This clause strongly matches standard legal clauses."
 
+        # 🔹 Severity
         if best_score < 0.4:
             severity = "High"
         elif best_score < 0.6:
             severity = "Medium"
         else:
             severity = "Low"
+
+        # 🔹 Add overlap + confidence
+        explanation += f"\nKey matching terms: {', '.join(overlap_words)}"
+        explanation += f"\nConfidence Level: {confidence_label}"
 
         results.append({
             "clause": clause,

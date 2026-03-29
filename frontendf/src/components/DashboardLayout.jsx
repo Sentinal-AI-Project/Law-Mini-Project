@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const SidebarLink = ({ to, icon: Icon, label }) => {
   const location = useLocation();
@@ -43,7 +44,17 @@ const SidebarLink = ({ to, icon: Icon, label }) => {
 };
 
 const DashboardLayout = ({ children }) => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleNotifications = () => {
+    window.alert('No new alerts in demo mode.');
+  };
 
   return (
     <div className="flex" style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
@@ -79,7 +90,7 @@ const DashboardLayout = ({ children }) => {
         </nav>
 
         <div style={{ marginTop: 'auto', padding: '1rem' }}>
-          <button onClick={() => navigate('/login')} className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem' }}>
+          <button className="btn btn-outline" onClick={handleLogout} style={{ width: '100%', justifyContent: 'flex-start', gap: '0.75rem' }}>
             <LogOut size={20} />
             <span>Logout</span>
           </button>
@@ -120,18 +131,18 @@ const DashboardLayout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', position: 'relative', padding: 0 }}>
+            <button onClick={handleNotifications} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', position: 'relative', padding: 0 }}>
               <Bell size={20} />
               <span style={{ position: 'absolute', top: -2, right: -2, width: '8px', height: '8px', background: 'var(--accent-red)', borderRadius: '50%' }}></span>
             </button>
             <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }}></div>
             <div className="flex items-center gap-2">
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>John Smith</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Compliance Analyst</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name || 'User'}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'analyst'}</div>
               </div>
               <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" 
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'default')}`}
                 alt="Avatar" 
                 style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid var(--accent-teal)' }}
               />

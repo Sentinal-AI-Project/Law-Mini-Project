@@ -1,9 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { AlertCircle, Download, FileText, Shield, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import CustomDropdown from '../components/CustomDropdown';
+import { complianceAPI } from '../services/api';
 
 const ExecutiveSummary = () => {
+  const navigate = useNavigate();
+  const [trendWindow, setTrendWindow] = useState('90D');
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const dashboardData = await complianceAPI.dashboard();
+        setStats(dashboardData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleDownloadSummary = () => {
+    const score = stats?.complianceScore || 72;
+    const blob = new Blob([`Executive Summary\nOverall Risk Score: ${100 - score}/100\nCompliance Rate: ${score}%\n`], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'executive-summary.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -14,29 +48,31 @@ const ExecutiveSummary = () => {
         <CustomDropdown options={['Last 90 Days', 'Last 30 Days', 'This Year']} width="160px" />
       </div>
 
-      <div style={{ background: '#dc2626', color: '#fff', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '50%' }}>
-            <AlertCircle size={32} color="#fff" />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 700 }}>Critical Findings Alert</h2>
-            <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>8 high-priority compliance violations require immediate attention</p>
-            <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem', fontWeight: 500 }}>
-              <span>Data Security (3)</span>
-              <span>Financial Controls (2)</span>
-              <span>SOX Compliance (3)</span>
+      {stats?.recent_critical?.length > 0 && (
+        <div style={{ background: '#dc2626', color: '#fff', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+            <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '50%' }}>
+              <AlertCircle size={32} color="#fff" />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 700 }}>Critical Findings Alert</h2>
+              <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>{stats.recent_critical.length} high-priority compliance violations require immediate attention</p>
+              <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem', fontWeight: 500 }}>
+                {stats.recent_critical.slice(0, 3).map(f => (
+                  <span key={f.id}>{f.risk_type}</span>
+                ))}
+              </div>
             </div>
           </div>
+          <button onClick={() => navigate('/findings')} style={{ background: '#fff', color: '#dc2626', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
         </div>
-        <button style={{ background: '#fff', color: '#dc2626', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
-      </div>
+      )}
 
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
-        <button className="btn btn-primary" style={{ flex: 1, background: '#4f46e5', color: '#fff', gap: '0.75rem', padding: '1rem' }}>
+        <button onClick={handleDownloadSummary} className="btn btn-primary" style={{ flex: 1, background: '#4f46e5', color: '#fff', gap: '0.75rem', padding: '1rem' }}>
           <Download size={20} /> Download Executive Summary
         </button>
-        <button className="btn btn-outline" style={{ flex: 1, background: '#fff', gap: '0.75rem', padding: '1rem' }}>
+        <button onClick={() => navigate('/reports')} className="btn btn-outline" style={{ flex: 1, background: '#fff', gap: '0.75rem', padding: '1rem' }}>
           <FileText size={20} /> View Full Report
         </button>
       </div>
@@ -45,44 +81,40 @@ const ExecutiveSummary = () => {
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ background: '#eff6ff', padding: '10px', borderRadius: '8px' }}><Shield size={24} color="#3b82f6" /></div>
-            <span style={{ color: '#dc2626', fontWeight: 600, fontSize: '0.85rem' }}>-12%</span>
           </div>
           <div>
             <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Overall Risk Score</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>72 <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>/100</span></div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : (100 - (stats?.complianceScore || 0))} <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>/100</span></div>
           </div>
         </div>
         
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '8px' }}><AlertTriangle size={24} color="#d97706" /></div>
-            <span style={{ color: '#059669', fontWeight: 600, fontSize: '0.85rem' }}>-8%</span>
           </div>
           <div>
             <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Open Violations</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>142</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : (stats?.totalFindings || 0)}</div>
           </div>
         </div>
 
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ background: '#ecfdf5', padding: '10px', borderRadius: '8px' }}><CheckCircle size={24} color="#10b981" /></div>
-            <span style={{ color: '#059669', fontWeight: 600, fontSize: '0.85rem' }}>+15%</span>
           </div>
           <div>
             <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Compliance Rate</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>87%</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : `${stats?.complianceScore || 0}%`}</div>
           </div>
         </div>
 
         <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ background: '#f3e8ff', padding: '10px', borderRadius: '8px' }}><Clock size={24} color="#9333ea" /></div>
-            <span style={{ color: '#d97706', fontWeight: 600, fontSize: '0.85rem' }}>+3 days</span>
           </div>
           <div>
-            <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Avg. Resolution Time</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>12 <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>d</span></div>
+            <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Documents Processed</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : (stats?.documents?.completed || 0)}</div>
           </div>
         </div>
       </div>
@@ -96,9 +128,9 @@ const ExecutiveSummary = () => {
               <p style={{ fontSize: '0.85rem', color: '#64748b' }}>90-day risk trajectory analysis</p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', background: '#f8fafc', padding: '0.25rem', borderRadius: '8px' }}>
-              <button style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: 'transparent', color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>30D</button>
-              <button style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: '#fff', color: '#3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '0.85rem', fontWeight: 600 }}>90D</button>
-              <button style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: 'transparent', color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>1Y</button>
+              <button onClick={() => setTrendWindow('30D')} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: trendWindow === '30D' ? '#fff' : 'transparent', color: trendWindow === '30D' ? '#3b82f6' : '#64748b', boxShadow: trendWindow === '30D' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', fontSize: '0.85rem', fontWeight: trendWindow === '30D' ? 600 : 500 }}>30D</button>
+              <button onClick={() => setTrendWindow('90D')} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: trendWindow === '90D' ? '#fff' : 'transparent', color: trendWindow === '90D' ? '#3b82f6' : '#64748b', boxShadow: trendWindow === '90D' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', fontSize: '0.85rem', fontWeight: trendWindow === '90D' ? 600 : 500 }}>90D</button>
+              <button onClick={() => setTrendWindow('1Y')} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', background: trendWindow === '1Y' ? '#fff' : 'transparent', color: trendWindow === '1Y' ? '#3b82f6' : '#64748b', boxShadow: trendWindow === '1Y' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', fontSize: '0.85rem', fontWeight: trendWindow === '1Y' ? 600 : 500 }}>1Y</button>
             </div>
           </div>
           
@@ -134,24 +166,29 @@ const ExecutiveSummary = () => {
           <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '2rem' }}>Most frequent compliance issues</p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-            {[
-              { title: 'Access Control Violations', desc: 'Unauthorized system access', count: 34, color: '#ef4444', pct: '85%' },
-              { title: 'Data Encryption Gaps', desc: 'Unencrypted sensitive data', count: 28, color: '#f59e0b', pct: '65%' },
-              { title: 'Approval Workflow Issues', desc: 'Missing dual approvals', count: 22, color: '#f59e0b', pct: '50%' },
-              { title: 'Documentation Deficiencies', desc: 'Incomplete audit trails', count: 19, color: '#3b82f6', pct: '40%' },
-              { title: 'Password Policy Breaches', desc: 'Weak or expired passwords', count: 15, color: '#3b82f6', pct: '30%' }
-            ].map((v, i) => (
-              <div key={i}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                  <span style={{ color: '#1e293b', fontWeight: 600, fontSize: '0.9rem' }}>{v.title}</span>
-                  <span style={{ color: v.color, fontWeight: 700, fontSize: '0.9rem' }}>{v.count}</span>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '0.5rem' }}>{v.desc}</div>
-                <div style={{ width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ width: v.pct, height: '100%', background: v.color, borderRadius: '3px' }}></div>
-                </div>
-              </div>
-            ))}
+            {loading ? (
+                <div style={{ color: '#64748b', textAlign: 'center' }}>Loading violations...</div>
+            ) : (!stats?.findings?.by_risk_type || stats.findings.by_risk_type.length === 0) ? (
+                <div style={{ color: '#64748b', textAlign: 'center' }}>No violations found.</div>
+            ) : (
+              stats.findings.by_risk_type.slice(0, 5).map((v, i) => {
+                const total = stats.findings.total || 1;
+                const pct = Math.round((v.count / total) * 100) + '%';
+                const color = i === 0 ? '#ef4444' : (i < 3 ? '#f59e0b' : '#3b82f6');
+                return (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                      <span style={{ color: '#1e293b', fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>{v._id || 'Unknown'} Risks</span>
+                      <span style={{ color, fontWeight: 700, fontSize: '0.9rem' }}>{v.count}</span>
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Frequency: {pct} of total findings</div>
+                    <div style={{ width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ width: pct, height: '100%', background: color, borderRadius: '3px' }}></div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

@@ -1,12 +1,24 @@
-Sentinel-Law
-The Shadow AI & Compliance Auditor
+🚀 Project Architecture
 
-Team T-29 | GLA University
-Version: v0.1 (Project Initialization)
+- **Frontend**: React (Vite), TailwindCSS, Framer Motion
+- **API Backend**: Node.js, Express (Port: 3000)
+- **AI/NLP Service**: Python, FastAPI, Spacy, Sentence-Transformers (Port: 5001)
+- **Database**: Supabase (PostgreSQL)
+- **Storage**: Local `uploads/` for documents
 
-📌 Project Overview
+🛠 Setup Instructions
 
-Sentinel-Law is an AI-driven compliance auditing system designed to silently and passively analyze organizational documents and communications to detect potential legal, regulatory, and internal policy risks.
+1. **Environment Config**:
+   Rename and fill `.env` with your Supabase credentials.
+   ```
+   PORT=3000
+   SUPABASE_URL=...
+   SUPABASE_SERVICE_ROLE_KEY=...
+   JWT_SECRET=...
+   NLP_SERVICE_URL=http://localhost:5001
+   CLIENT_URL=http://localhost:5173
+   ```
+
 
 Unlike traditional compliance tools, Sentinel-Law operates in read-only mode, ensuring zero disruption to existing business workflows while producing explainable audit findings mapped to laws and policies.
 

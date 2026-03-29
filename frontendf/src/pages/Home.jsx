@@ -1,10 +1,21 @@
 import React from 'react';
-import { ShieldCheck, ArrowRight, Zap, Lock, Shield, UploadCloud, BrainCircuit, Search, FileText, Eye, Network, Lightbulb, BarChart, Scale, UserCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ShieldCheck, ArrowRight, Zap, Lock, Shield, UploadCloud, BrainCircuit, Search, FileText, Network, Lightbulb, BarChart, Scale, UserCheck, Eye } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import dashboardImg from '../assets/minimalist_dashboard_ai.png';
 
 const Home = () => {
+  const navigate = useNavigate();
+
+  const handleRequestDemo = () => {
+    window.alert('Demo request received. Redirecting you to login for quick preview mode.');
+    navigate('/login');
+  };
+
+  const handleFooterLink = (label) => {
+    window.alert(`${label} will be available in the next release.`);
+  };
+
   return (
     <div className="app">
       <nav className="container" style={{ padding: '1.5rem 2rem' }}>
@@ -21,12 +32,13 @@ const Home = () => {
           </div>
           <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <Link to="/login" className="text-muted" style={{ fontWeight: 500 }}>Login</Link>
-            <button className="btn btn-primary">Request Demo</button>
+            <Link to="/register" className="btn btn-outline">Sign Up</Link>
+            <button className="btn btn-primary" onClick={handleRequestDemo}>Request Demo</button>
           </div>
         </div>
       </nav>
 
-      <section className="container hero" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', padding: '6rem 2rem' }}>
+      <section id="hero" className="container hero" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', padding: '6rem 2rem' }}>
         <motion.div 
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -41,7 +53,7 @@ const Home = () => {
             Real-time document analysis with explainable audit findings. Monitor compliance across GDPR, HIPAA, and SOX frameworks.
           </p>
           <div className="hero-actions" style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn btn-primary" style={{ padding: '1rem 2rem' }}>Request Demo <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} /></button>
+            <button className="btn btn-primary" onClick={handleRequestDemo} style={{ padding: '1rem 2rem' }}>Request Demo <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} /></button>
             <Link to="/login" className="btn btn-outline" style={{ padding: '1rem 2rem' }}>Login</Link>
           </div>
           
@@ -246,9 +258,9 @@ const Home = () => {
               <span>Sentinel-Law</span>
             </div>
             <div style={{ display: 'flex', gap: '2rem' }}>
-              <a href="#" className="text-muted">Documentation</a>
-              <a href="#" className="text-muted">Privacy Policy</a>
-              <a href="#" className="text-muted">Contact Support</a>
+              <button onClick={() => handleFooterLink('Documentation')} style={{ background: 'none', border: 'none', cursor: 'pointer' }} className="text-muted">Documentation</button>
+              <button onClick={() => handleFooterLink('Privacy Policy')} style={{ background: 'none', border: 'none', cursor: 'pointer' }} className="text-muted">Privacy Policy</button>
+              <button onClick={() => handleFooterLink('Contact Support')} style={{ background: 'none', border: 'none', cursor: 'pointer' }} className="text-muted">Contact Support</button>
             </div>
             <p className="text-muted">&copy; 2024 Sentinel-Law. All rights reserved.</p>
           </div>

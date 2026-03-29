@@ -10,7 +10,20 @@ const UploadDocuments = () => {
   const [framework, setFramework] = useState('');
   const [files, setFiles] = useState([]); // [{ file, status, docId, error, progress }]
   const [analyzing, setAnalyzing] = useState(false);
+  const [historyDocs, setHistoryDocs] = useState([]);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await docsAPI.list({ limit: 4 });
+        if (res.documents) setHistoryDocs(res.documents);
+      } catch (err) {
+        console.error('Failed to fetch history', err);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   const handleFileChange = async (e) => {
     const selected = Array.from(e.target.files || []);
@@ -31,12 +44,15 @@ const UploadDocuments = () => {
     for (let i = 0; i < selected.length; i++) {
       const file = selected[i];
       try {
-        const data = await docsAPI.upload(file, 'contract');
+        const data = await docsAPI.upload(file, framework || 'contract');
         setFiles((prev) =>
           prev.map((entry) =>
             entry.file === file ? { ...entry, status: 'uploaded', docId: data.docId, progress: 100 } : entry
           )
         );
+        // refresh history
+        const res = await docsAPI.list({ limit: 4 });
+        if (res.documents) setHistoryDocs(res.documents);
       } catch (err) {
         setFiles((prev) =>
           prev.map((entry) =>
@@ -92,15 +108,15 @@ const UploadDocuments = () => {
   };
 
   const statusIcon = (entry) => {
-    if (entry.status === 'uploaded' || entry.status === 'analyzing') return <CheckCircle2 size={16} />;
-    if (entry.status === 'error') return <AlertTriangle size={16} />;
+    if (entry.status === 'uploaded' || entry.status === 'analyzing' || entry.status === 'analyzed') return <CheckCircle2 size={16} />;
+    if (entry.status === 'error' || entry.status === 'failed') return <AlertTriangle size={16} />;
     return <AlertCircle size={16} />;
   };
 
   const statusColor = (entry) => {
-    if (entry.status === 'uploaded') return '#059669';
+    if (entry.status === 'uploaded' || entry.status === 'analyzed') return '#059669';
     if (entry.status === 'analyzing') return '#2563eb';
-    if (entry.status === 'error') return '#dc2626';
+    if (entry.status === 'error' || entry.status === 'failed') return '#dc2626';
     return '#d97706';
   };
 
@@ -108,8 +124,9 @@ const UploadDocuments = () => {
     if (entry.status === 'uploading') return 'Uploading…';
     if (entry.status === 'uploaded') return 'Uploaded';
     if (entry.status === 'analyzing') return 'Analyzing';
-    if (entry.status === 'error') return entry.error || 'Error';
-    return entry.status;
+    if (entry.status === 'analyzed') return 'Completed';
+    if (entry.status === 'error' || entry.status === 'failed') return entry.error || 'Error';
+    return entry.status || 'Pending';
   };
 
   return (
@@ -123,7 +140,7 @@ const UploadDocuments = () => {
               <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Upload Documents</h1>
               <p style={{ color: 'var(--text-muted)' }}>Upload documents for compliance analysis</p>
             </div>
-            <button className="btn btn-primary" onClick={handleRunAnalysis} disabled={analyzing || !files.some((f) => f.status === 'uploaded')} style={{ background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: analyzing ? 0.7 : 1 }}>
+            <button className="btn btn-primary" onClick={handleRunAnalysis} disabled={analyzing || !files.some((f) => f.status === 'uploaded')} style={{ background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: analyzing || !files.some((f) => f.status === 'uploaded') ? 0.7 : 1 }}>
               <Play size={18} fill="currentColor" /> {analyzing ? 'Analyzing…' : 'Run Analysis'}
             </button>
           </div>
@@ -196,63 +213,40 @@ const UploadDocuments = () => {
            
            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
              
-             {/* History Item 1 */}
-             <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b' }}>GDPR Analysis #1247</div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#ecfdf5', color: '#059669', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                    <CheckCircle2 size={12} /> Completed
-                  </span>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>3 documents • 2 hours ago</div>
-                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
-                  <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
-                  <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
-                </div>
-             </div>
+             {historyDocs.length === 0 && (
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center' }}>No recent uploads.</div>
+             )}
 
-             {/* History Item 2 */}
-             <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b' }}>HIPAA Analysis #1248</div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#fef3c7', color: '#d97706', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                    <AlertCircle size={12} /> Analyzing
-                  </span>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>5 documents • Started 15 min ago</div>
-                <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ width: '40%', height: '100%', background: '#2563eb' }}></div>
-                </div>
-             </div>
-
-             {/* History Item 3 */}
-             <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b' }}>SOX Analysis #1246</div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                    <AlertTriangle size={12} /> Error
-                  </span>
-                </div>
-                <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: '1rem' }}>Failed to process corrupted files</div>
-                 <button onClick={handleRetryAnalysis} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}>Retry Analysis</button>
-             </div>
-
-             {/* History Item 4 */}
-             <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b' }}>Internal Policy #1245</div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#ecfdf5', color: '#059669', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                    <CheckCircle2 size={12} /> Completed
-                  </span>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>2 documents • Yesterday</div>
-                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
-                  <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
-                  <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
-                </div>
-             </div>
+             {historyDocs.map((doc) => (
+               <div key={doc.id || doc._id} className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                    <div style={{ fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{doc.filename || doc.name}</div>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: doc.status === 'analyzed' ? '#ecfdf5' : doc.status === 'failed' ? '#fee2e2' : '#fef3c7', color: statusColor(doc), borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                      {statusIcon(doc)} <span style={{ textTransform: 'capitalize' }}>{statusLabel(doc)}</span>
+                    </span>
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>Uploaded {new Date(doc.uploaded_at || doc.created_at).toLocaleDateString()}</div>
+                  {doc.status === 'analyzing' && (
+                    <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                      <div style={{ width: '40%', height: '100%', background: '#2563eb' }}></div>
+                    </div>
+                  )}
+                  {doc.status === 'failed' && (
+                    <>
+                      <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: '1rem' }}>Failed to process</div>
+                      <button onClick={handleRetryAnalysis} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}>Retry Analysis</button>
+                    </>
+                  )}
+                  {doc.status === 'analyzed' && (
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
+                      <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
+                      <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
+                    </div>
+                  )}
+               </div>
+             ))}
              
-             <button onClick={() => navigate('/reports')} style={{ width: '100%', marginTop: '0.5rem', padding: '1rem', border: 'none', background: 'none', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
+             <button onClick={() => navigate('/library')} style={{ width: '100%', marginTop: '0.5rem', padding: '1rem', border: 'none', background: 'none', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
                View All History
              </button>
 

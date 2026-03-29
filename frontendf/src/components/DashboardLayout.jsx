@@ -44,7 +44,7 @@ const SidebarLink = ({ to, icon: Icon, label }) => {
 };
 
 const DashboardLayout = ({ children }) => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -138,11 +138,11 @@ const DashboardLayout = ({ children }) => {
             <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }}></div>
             <div className="flex items-center gap-2">
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>John Smith</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Compliance Analyst</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name || 'User'}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'analyst'}</div>
               </div>
               <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" 
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'default')}`}
                 alt="Avatar" 
                 style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid var(--accent-teal)' }}
               />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, ArrowRight, Zap, Lock, Shield, UploadCloud, BrainCircuit, Search, FileText, Network, Lightbulb, BarChart, Scale, UserCheck } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Zap, Lock, Shield, UploadCloud, BrainCircuit, Search, FileText, Network, Lightbulb, BarChart, Scale, UserCheck, Eye } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import dashboardImg from '../assets/minimalist_dashboard_ai.png';
@@ -32,6 +32,7 @@ const Home = () => {
           </div>
           <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <Link to="/login" className="text-muted" style={{ fontWeight: 500 }}>Login</Link>
+            <Link to="/register" className="btn btn-outline">Sign Up</Link>
             <button className="btn btn-primary" onClick={handleRequestDemo}>Request Demo</button>
           </div>
         </div>

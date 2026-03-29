@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText, AlertTriangle, HelpCircle, Clock } from 'lucide-react';
-import { complianceAPI, findingsAPI } from '../services/api';
+import { complianceAPI, findingsAPI, docsAPI } from '../services/api';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import CustomDropdown from '../components/CustomDropdown';
 
@@ -14,25 +14,55 @@ const riskData = [
 
 const ComplianceDashboard = () => {
   const [stats, setStats] = useState(null);
+  const [recentDocs, setRecentDocs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [dashData, findingStats] = await Promise.allSettled([
+        const [dashData, findingStats, docsData] = await Promise.allSettled([
           complianceAPI.dashboard(),
           findingsAPI.stats(),
+          docsAPI.list({ limit: 4 })
         ]);
         setStats({
           dashboard: dashData.status === 'fulfilled' ? dashData.value : null,
           findings: findingStats.status === 'fulfilled' ? findingStats.value : null,
         });
+        if (docsData.status === 'fulfilled' && docsData.value.documents) {
+          setRecentDocs(docsData.value.documents);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchStats();
   }, []);
+
+  const getRiskData = () => {
+    if (!stats?.findings?.severityStats || stats.findings.severityStats.length === 0) {
+      return [{ name: 'No data', value: 1, color: '#e2e8f0' }];
+    }
+    const mapping = {
+      low: { color: '#10b981' },
+      medium: { color: '#f59e0b' },
+      high: { color: '#dc2626' },
+      critical: { color: '#3b82f6' }
+    };
+    return stats.findings.severityStats.map(s => ({
+      name: s.severity.charAt(0).toUpperCase() + s.severity.slice(1),
+      value: s.count,
+      color: mapping[s.severity] || '#94a3b8'
+    }));
+  };
+
+  const dynamicRiskData = getRiskData();
+
+  const totalDocs = stats?.dashboard?.totalDocuments || 0;
+  const processingDocs = stats?.dashboard?.processingCount || 0;
+  const completedDocs = Math.max(0, totalDocs - processingDocs);
+  const completedPct = totalDocs > 0 ? (completedDocs / totalDocs) * 100 : 0;
+  const processingPct = totalDocs > 0 ? (processingDocs / totalDocs) * 100 : 0;
 
   return (
     <DashboardLayout>
@@ -48,16 +78,12 @@ const ComplianceDashboard = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
           <span style={{ fontWeight: 600, color: '#1e293b' }}>System Status: Online</span>
-          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Last updated 2 minutes ago</span>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Live</span>
         </div>
         <div style={{ display: 'flex', gap: '3rem' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '0.25rem' }}>P95 Analysis Time</div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>2.4s</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
             <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Queue Length</div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>3</div>
+            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>{loading ? '—' : processingDocs}</div>
           </div>
         </div>
       </div>
@@ -68,7 +94,7 @@ const ComplianceDashboard = () => {
            <div>
              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Documents</div>
              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
-               {loading ? '—' : (stats?.dashboard?.totalDocuments ?? '—')}
+               {loading ? '—' : totalDocs}
              </div>
              <div style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 500 }}>All uploaded documents</div>
            </div>
@@ -98,7 +124,7 @@ const ComplianceDashboard = () => {
            <div>
              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Processing</div>
              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
-               {loading ? '—' : (stats?.dashboard?.processingCount ?? '—')}
+               {loading ? '—' : processingDocs}
              </div>
              <div style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 500 }}>Documents in queue</div>
            </div>
@@ -113,7 +139,7 @@ const ComplianceDashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={riskData}
+                    data={dynamicRiskData}
                     cx="50%"
                     cy="50%"
                     innerRadius={0}
@@ -123,12 +149,12 @@ const ComplianceDashboard = () => {
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
                     labelLine={false}
                   >
-                    {riskData.map((entry, index) => (
+                    {dynamicRiskData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value) => `${value}%`}
+                    formatter={(value) => `${value}`}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                   />
                 </PieChart>
@@ -143,44 +169,36 @@ const ComplianceDashboard = () => {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
                   <span style={{ fontWeight: 500, color: '#1e293b' }}>Completed</span>
-                  <span style={{ color: '#64748b' }}>1,240 documents</span>
+                  <span style={{ color: '#64748b' }}>{completedDocs} documents</span>
                 </div>
                 <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px' }}>
-                  <div style={{ width: '90%', height: '100%', background: '#10b981', borderRadius: '4px' }}></div>
+                  <div style={{ width: `${completedPct}%`, height: '100%', background: '#10b981', borderRadius: '4px' }}></div>
                 </div>
               </div>
               
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 500, color: '#1e293b' }}>Analyzing</span>
-                  <span style={{ color: '#64748b' }}>4 documents</span>
+                  <span style={{ fontWeight: 500, color: '#1e293b' }}>Processing</span>
+                  <span style={{ color: '#64748b' }}>{processingDocs} documents</span>
                 </div>
                 <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px' }}>
-                  <div style={{ width: '25%', height: '100%', background: '#c7d2fe', borderRadius: '4px' }}></div>
-                </div>
-              </div>
-              
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 500, color: '#1e293b' }}>Pending</span>
-                  <span style={{ color: '#64748b' }}>3 documents</span>
-                </div>
-                <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px' }}>
-                  <div style={{ width: '15%', height: '100%', background: '#f59e0b', borderRadius: '4px' }}></div>
+                  <div style={{ width: `${processingPct}%`, height: '100%', background: '#c7d2fe', borderRadius: '4px' }}></div>
                 </div>
               </div>
               
               {/* Active task pill */}
-              <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '1rem', marginTop: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#1e3a8a', fontWeight: 600 }}>Current Analysis</span>
-                  <span style={{ color: '#2563eb', fontWeight: 600 }}>73% complete</span>
+              {processingDocs > 0 && (
+                <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '1rem', marginTop: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#1e3a8a', fontWeight: 600 }}>Active Analyses</span>
+                    <span style={{ color: '#2563eb', fontWeight: 600 }}>In Progress</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: '#bfdbfe', borderRadius: '4px', marginBottom: '0.5rem' }}>
+                    <div style={{ width: '50%', height: '100%', background: '#2563eb', borderRadius: '4px' }}></div>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>Processing {processingDocs} documents...</div>
                 </div>
-                <div style={{ width: '100%', height: '8px', background: '#bfdbfe', borderRadius: '4px', marginBottom: '0.5rem' }}>
-                  <div style={{ width: '73%', height: '100%', background: '#2563eb', borderRadius: '4px' }}></div>
-                </div>
-                <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>Financial_Report_Q3_2024.pdf</div>
-              </div>
+              )}
             </div>
          </div>
       </div>
@@ -198,23 +216,34 @@ const ComplianceDashboard = () => {
              </tr>
            </thead>
            <tbody>
-             {[
-               { name: 'Financial_Report_Q3_2024.pdf', status: 'Analyzing', sColor: '#2563eb', risk: 'Medium', rColor: '#d97706', findings: '-', time: '2 minutes ago' },
-               { name: 'Compliance_Policy_Update.docx', status: 'Completed', sColor: '#10b981', risk: 'Low', rColor: '#10b981', findings: '2', time: '1 hour ago' },
-               { name: 'Risk_Assessment_Matrix.xlsx', status: 'Completed', sColor: '#10b981', risk: 'Critical', rColor: '#dc2626', findings: '7', time: '3 hours ago' },
-               { name: 'Audit_Trail_October.pdf', status: 'Completed', sColor: '#10b981', risk: 'High', rColor: '#dc2626', findings: '4', time: '5 hours ago' }
-             ].map((row, i) => (
-               <tr key={i} style={{ borderTop: '1px solid #e2e8f0' }}>
-                 <td style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <FileText size={18} color="#ef4444" />
-                    <span style={{ fontWeight: 500, color: '#1e293b', fontSize: '0.95rem' }}>{row.name}</span>
+             {recentDocs.length === 0 ? (
+               <tr>
+                 <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+                   No recent uploads found.
                  </td>
-                 <td style={{ padding: '1.25rem 1.5rem', color: row.sColor, fontSize: '0.9rem', fontWeight: 500 }}>{row.status}</td>
-                 <td style={{ padding: '1.25rem 1.5rem', color: row.rColor, fontSize: '0.9rem', fontWeight: 500 }}>{row.risk}</td>
-                 <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem', fontWeight: 500 }}>{row.findings}</td>
-                 <td style={{ padding: '1.25rem 1.5rem', color: '#64748b', fontSize: '0.9rem' }}>{row.time}</td>
                </tr>
-             ))}
+             ) : (
+               recentDocs.map((doc, i) => (
+                 <tr key={doc.id || i} style={{ borderTop: '1px solid #e2e8f0' }}>
+                   <td style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <FileText size={18} color="#ef4444" />
+                      <span style={{ fontWeight: 500, color: '#1e293b', fontSize: '0.95rem' }}>{doc.filename || doc.name}</span>
+                   </td>
+                   <td style={{ padding: '1.25rem 1.5rem', color: doc.status === 'analyzed' ? '#10b981' : (doc.status === 'failed' ? '#ef4444' : '#2563eb'), fontSize: '0.9rem', fontWeight: 500, textTransform: 'capitalize' }}>
+                      {doc.status}
+                   </td>
+                   <td style={{ padding: '1.25rem 1.5rem', color: '#64748b', fontSize: '0.9rem', fontWeight: 500, textTransform: 'capitalize' }}>
+                      {doc.risk_level || '-'}
+                   </td>
+                   <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem', fontWeight: 500 }}>
+                      {doc.findings_count != null ? doc.findings_count : '-'}
+                   </td>
+                   <td style={{ padding: '1.25rem 1.5rem', color: '#64748b', fontSize: '0.9rem' }}>
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                   </td>
+                 </tr>
+               ))
+             )}
            </tbody>
          </table>
       </div>

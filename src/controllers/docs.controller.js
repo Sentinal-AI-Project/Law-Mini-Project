@@ -1,16 +1,30 @@
 const supabase = require('../config/supabase');
 const nlpService = require('../services/nlp.service');
 
-const mapDocument = (row) => ({
-    _id: row.id,
-    id: row.id,
-    filename: row.filename,
-    doc_type: row.doc_type,
-    upload_user_id: row.upload_user_id,
-    source_url: row.source_url,
-    status: row.status,
-    uploaded_at: row.uploaded_at,
-});
+const mapDocument = (row) => {
+    let risk_level = 'Low';
+    let findings_count = 0;
+
+    if (row.findings && Array.isArray(row.findings)) {
+        findings_count = row.findings.length;
+        if (row.findings.some(f => f.severity === 'critical')) risk_level = 'Critical';
+        else if (row.findings.some(f => f.severity === 'high')) risk_level = 'High';
+        else if (row.findings.some(f => f.severity === 'medium')) risk_level = 'Medium';
+    }
+
+    return {
+        _id: row.id,
+        id: row.id,
+        filename: row.filename,
+        doc_type: row.doc_type,
+        upload_user_id: row.upload_user_id,
+        file_url: row.source_url,
+        status: row.status,
+        uploaded_at: row.uploaded_at,
+        risk_level,
+        findings_count
+    };
+};
 
 const mapFinding = (row) => ({
     _id: row.id,
@@ -36,13 +50,35 @@ exports.upload = async (req, res) => {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
+        const filePath = `${req.user.id}/${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.\-]/g, '_')}`;
+
+        // Upload to Supabase Storage bucket
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(filePath, req.file.buffer, {
+                contentType: req.file.mimetype,
+                upsert: false
+            });
+
+        if (uploadError) {
+            throw uploadError;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('documents')
+            .getPublicUrl(filePath);
+
+        const sourceUrl = urlData.publicUrl;
+
+        // Save metadata to DB
         const { data: doc, error } = await supabase
             .from('documents')
             .insert({
                 filename: req.file.originalname,
                 doc_type: req.body.doc_type || 'contract',
                 upload_user_id: req.user.id,
-                source_url: req.file.path,
+                source_url: sourceUrl,
                 status: 'pending',
             })
             .select('id, filename, status, uploaded_at')
@@ -59,6 +95,7 @@ exports.upload = async (req, res) => {
             uploaded_at: doc.uploaded_at,
         });
     } catch (err) {
+        console.error('Upload Error:', err);
         res.status(500).json({ message: 'Upload failed', error: err.message });
     }
 };
@@ -176,7 +213,7 @@ exports.listDocuments = async (req, res) => {
 
         let query = supabase
             .from('documents')
-            .select('id, filename, doc_type, upload_user_id, source_url, status, uploaded_at', { count: 'exact' })
+            .select('id, filename, doc_type, upload_user_id, source_url, status, uploaded_at, findings(id, severity)', { count: 'exact' })
             .eq('upload_user_id', req.user.id);
 
         if (status) {
@@ -223,7 +260,7 @@ exports.getDocument = async (req, res) => {
     try {
         const { data: doc, error } = await supabase
             .from('documents')
-            .select('id, filename, doc_type, upload_user_id, source_url, status, uploaded_at')
+            .select('id, filename, doc_type, upload_user_id, source_url, status, uploaded_at, findings(id, severity)')
             .eq('id', req.params.id)
             .maybeSingle();
 

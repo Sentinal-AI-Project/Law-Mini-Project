@@ -1,5 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 const supabase = require('../config/supabase');
 
 const NLP_SERVICE_URL = process.env.NLP_SERVICE_URL || 'http://localhost:5001';
@@ -13,11 +14,13 @@ exports.analyze = async (doc) => {
     const docId = doc.id || doc._id;
 
     try {
-        const fileText = fs.readFileSync(doc.source_url, 'utf-8');
+        const fileUrlOrPath = doc.source_url.startsWith('http') 
+            ? doc.source_url 
+            : path.resolve(doc.source_url);
 
         const { data } = await axios.post(`${NLP_SERVICE_URL}/analyze`, {
             doc_id: String(docId),
-            text: fileText,
+            file_path: fileUrlOrPath,
             frameworks: ['GDPR', 'HIPAA'],
         }, {
             timeout: 120000,
@@ -28,7 +31,6 @@ exports.analyze = async (doc) => {
         }
 
         const validFindings = data.findings
-            .filter((f) => Number(f.confidence) >= 0.7)
             .map((f) => ({
                 document_id: docId,
                 risk_type: f.risk_type,

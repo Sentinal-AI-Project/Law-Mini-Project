@@ -12,6 +12,9 @@ const AuditReport = () => {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  const [docStats, setDocStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,6 +31,25 @@ const AuditReport = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!selectedDoc) {
+      setDocStats(null);
+      return;
+    }
+    const fetchDocStats = async () => {
+      setLoadingStats(true);
+      try {
+        const stats = await findingsAPI.stats({ document_id: selectedDoc });
+        setDocStats(stats);
+      } catch (err) {
+        console.error('Failed to fetch doc stats', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchDocStats();
+  }, [selectedDoc]);
 
   const handleGenerate = async () => {
     if (!selectedDoc) return;
@@ -60,7 +82,37 @@ const AuditReport = () => {
   };
 
   const handleExportCsv = () => {
-    downloadTextFile('audit-report-summary.csv', 'severity,count\ncritical,3\nhigh,12\nmedium,28\nlow,45\n');
+    if (!docStats) return;
+    const severityCsv = docStats.severityStats?.map(s => `${s.severity},${s.count}`).join('\n') || '';
+    downloadTextFile('audit-report-summary.csv', `severity,count\n${severityCsv}\n`);
+  };
+
+  const getSeverityCount = (severity) => {
+    return docStats?.severityStats?.find(s => s.severity === severity)?.count || 0;
+  };
+
+  const criticalCount = getSeverityCount('critical');
+  const highCount = getSeverityCount('high');
+  const mediumCount = getSeverityCount('medium');
+  const lowCount = getSeverityCount('low');
+  const totalFindings = docStats?.total || 0;
+  const compScore = totalFindings === 0 && selectedDoc ? 100 : Math.max(0, 100 - (criticalCount * 10 + highCount * 5 + mediumCount * 2));
+
+  // Determine conic gradient for pie chart dynamically
+  const getPieStyle = () => {
+    if (totalFindings === 0) return { background: '#e2e8f0' };
+    const lowPct = (lowCount / totalFindings) * 100;
+    const medPct = (mediumCount / totalFindings) * 100;
+    const highPct = (highCount / totalFindings) * 100;
+    const critPct = (criticalCount / totalFindings) * 100;
+    
+    const p1 = lowPct;
+    const p2 = p1 + medPct;
+    const p3 = p2 + highPct;
+    
+    return {
+      background: `conic-gradient(#10b981 0% ${p1}%, #2563eb ${p1}% ${p2}%, #d97706 ${p2}% ${p3}%, #dc2626 ${p3}% 100%)`
+    };
   };
 
   return (
@@ -109,7 +161,7 @@ const AuditReport = () => {
               >
                 <option value="">— select a document —</option>
                 {docs.map((d) => (
-                  <option key={d._id} value={d._id}>{d.filename}</option>
+                  <option key={d._id || d.id} value={d._id || d.id}>{d.filename}</option>
                 ))}
               </select>
               {loading && <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>Loading documents…</p>}
@@ -134,14 +186,14 @@ const AuditReport = () => {
 
         {/* Right Side - Preview */}
         <div style={{ flex: 1 }}>
-          <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '2rem' }}>
+          <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '2rem', opacity: loadingStats ? 0.6 : 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Report Preview</h2>
+              <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Report Preview {selectedDoc ? '' : '(No doc selected)'}</h2>
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <button onClick={handleExportPdf} className="btn" style={{ background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <button onClick={handleExportPdf} className="btn" disabled={!selectedDoc} style={{ background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', opacity: !selectedDoc ? 0.5 : 1 }}>
                    <DownloadCloud size={16} /> Export PDF
                 </button>
-                <button onClick={handleExportCsv} className="btn" style={{ background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <button onClick={handleExportCsv} className="btn" disabled={!selectedDoc} style={{ background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', opacity: !selectedDoc ? 0.5 : 1 }}>
                    <FileText size={16} /> Export CSV
                 </button>
               </div>
@@ -151,22 +203,22 @@ const AuditReport = () => {
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
               <div style={{ flex: 1, background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
                 <div style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Critical Risks</div>
-                <div style={{ color: '#dc2626', fontSize: '2rem', fontWeight: 700 }}>3</div>
+                <div style={{ color: '#dc2626', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : criticalCount}</div>
                 <AlertTriangle size={20} color="#dc2626" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
               </div>
               <div style={{ flex: 1, background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
                 <div style={{ color: '#d97706', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>High Risks</div>
-                <div style={{ color: '#d97706', fontSize: '2rem', fontWeight: 700 }}>12</div>
+                <div style={{ color: '#d97706', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : highCount}</div>
                 <AlertCircle size={20} color="#d97706" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
               </div>
               <div style={{ flex: 1, background: '#eff6ff', border: '1px solid #dbeafe', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
                 <div style={{ color: '#2563eb', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Medium Risks</div>
-                <div style={{ color: '#2563eb', fontSize: '2rem', fontWeight: 700 }}>28</div>
+                <div style={{ color: '#2563eb', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : mediumCount}</div>
                 <Info size={20} color="#2563eb" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
               </div>
               <div style={{ flex: 1, background: '#ecfdf5', border: '1px solid #d1fae5', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
                 <div style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Low Risks</div>
-                <div style={{ color: '#059669', fontSize: '2rem', fontWeight: 700 }}>45</div>
+                <div style={{ color: '#059669', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : lowCount}</div>
                 <CheckCircle2 size={20} color="#059669" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
               </div>
             </div>
@@ -179,7 +231,7 @@ const AuditReport = () => {
                   {/* CSS Pie Chart simulation */}
                   <div style={{ 
                     width: '180px', height: '180px', borderRadius: '50%', marginBottom: '1.5rem',
-                    background: 'conic-gradient(#10b981 0% 51.1%, #2563eb 51.1% 82.9%, #d97706 82.9% 96.5%, #dc2626 96.5% 100%)' 
+                    ...getPieStyle()
                   }}></div>
                   <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#64748b', flexWrap: 'wrap', justifyContent: 'center' }}>
                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', background: '#10b981', display: 'inline-block' }}></span> Low</span>
@@ -200,15 +252,15 @@ const AuditReport = () => {
                     </div>
                   ))}
                   
-                  {/* Bars */}
+                  {/* Bars - dynamically mapping mock stats since confidence distribution isn't natively aggregated yet */}
                   {[
-                    { label: 'Very High', value: 32, color: '#059669' },
-                    { label: 'High', value: 28, color: '#0d9488' },
-                    { label: 'Medium', value: 18, color: '#0284c7' },
-                    { label: 'Low', value: 7, color: '#3b82f6' }
+                    { label: 'Very High', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.4), color: '#059669' },
+                    { label: 'High', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.3), color: '#0d9488' },
+                    { label: 'Medium', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.2), color: '#0284c7' },
+                    { label: 'Low', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.1), color: '#3b82f6' }
                   ].map((bar, i) => (
                     <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
-                       <div style={{ width: '100%', height: `${(bar.value/35)*100}%`, background: bar.color, transition: 'height 0.3s' }}></div>
+                       <div style={{ width: '100%', height: `${Math.min(100, (bar.value/(Math.max(10, totalFindings)))*100)}%`, background: bar.color, transition: 'height 0.3s' }}></div>
                        <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>{bar.label}</div>
                     </div>
                   ))}
@@ -221,15 +273,15 @@ const AuditReport = () => {
                <h4 style={{ color: '#1e293b', marginBottom: '1.5rem', fontSize: '1rem' }}>Total Findings Summary</h4>
                <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                  <div>
-                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>88</div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{!selectedDoc ? '-' : totalFindings}</div>
                    <div style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>Total Findings</div>
                  </div>
                  <div>
-                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>92%</div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>{!selectedDoc ? '-' : `${compScore}%`}</div>
                    <div style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>Compliance Score</div>
                  </div>
                  <div>
-                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>76</div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>{!selectedDoc ? '-' : 0}</div>
                    <div style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>Resolved Issues</div>
                  </div>
                </div>

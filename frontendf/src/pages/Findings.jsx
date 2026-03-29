@@ -184,11 +184,11 @@ const Findings = () => {
                 </div>
               </div>
 
-              {activeFinding.clause_id?.clause_text && (
+              {(activeFinding.evidence_snippet || activeFinding.clause_id?.clause_text) && (
                 <div style={{ marginBottom: '2rem' }}>
                   <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '1rem' }}>Identified Risk Clause</h3>
                   <div style={{ background: '#fef9c3', padding: '1.5rem', borderRadius: '8px', border: '1px solid #fef08a', color: '#422006', lineHeight: 1.6 }}>
-                    "{activeFinding.clause_id.clause_text}"
+                    "{activeFinding.evidence_snippet || activeFinding.clause_id?.clause_text}"
                   </div>
                 </div>
               )}
@@ -200,8 +200,11 @@ const Findings = () => {
                     <AlertTriangle size={20} color={severityColor(activeFinding.severity).text} style={{ flexShrink: 0 }} />
                     <div>
                       <h4 style={{ color: '#1e293b', marginBottom: '0.5rem', fontSize: '1rem' }}>Evidence Trace</h4>
-                      <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '1rem' }}>The system has identified specific matches within the document related to {activeFinding.type || 'compliance issues'}.</p>
-                      <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: 500 }}>Location: Page {activeFinding.page_number || '—'}</div>
+                      <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '1rem' }}>The system has identified specific matches within the document related to {activeFinding.risk_type || 'compliance issues'}.</p>
+                      {activeFinding.evidence_snippet && (
+                         <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: 500, fontStyle: 'italic' }}>Snippet: "{activeFinding.evidence_snippet.substring(0, 150)}..."</div>
+                      )}
+                      <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: 500 }}>Confidence Score: {activeFinding.confidence ? (activeFinding.confidence * 100).toFixed(1) + '%' : '—'}</div>
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText, AlertTriangle, HelpCircle, Clock } from 'lucide-react';
 import { complianceAPI, findingsAPI } from '../services/api';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import CustomDropdown from '../components/CustomDropdown';
+
+const riskData = [
+  { name: 'Low', value: 50.6, color: '#10b981' },
+  { name: 'Medium', value: 31.5, color: '#f59e0b' },
+  { name: 'High', value: 13.5, color: '#dc2626' },
+  { name: 'Critical', value: 4.4, color: '#3b82f6' },
+];
 
 const ComplianceDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -24,18 +33,15 @@ const ComplianceDashboard = () => {
     };
     fetchStats();
   }, []);
+
   return (
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', color: '#1e293b', marginBottom: '0.25rem' }}>Compliance Dashboard</h1>
-          <p style={{ color: '#64748b' }}>Monitor your compliance analysis in real-time</p>
+          <h1 style={{ fontSize: '1.75rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>Compliance Dashboard</h1>
+          <p style={{ color: 'var(--text-muted)' }}>Monitor your compliance analysis in real-time</p>
         </div>
-        <select style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.95rem' }}>
-          <option>SOX Framework</option>
-          <option>GDPR</option>
-          <option>HIPAA</option>
-        </select>
+        <CustomDropdown options={['SOX Framework', 'GDPR', 'HIPAA']} width="170px" />
       </div>
 
       <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -104,17 +110,29 @@ const ComplianceDashboard = () => {
          <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '2rem' }}>Risk Breakdown</h3>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '250px' }}>
-               {/* CSS Pie Chart Approximation */}
-               <div style={{ 
-                 position: 'relative', width: '220px', height: '220px', borderRadius: '50%',
-                 background: 'conic-gradient(#10b981 0% 50.6%, #f59e0b 50.6% 82.1%, #dc2626 82.1% 95.6%, #3b82f6 95.6% 100%)'
-               }}>
-                 {/* Labels */}
-                 <div style={{ position: 'absolute', top: '50%', right: '-40px', transform: 'translateY(-50%)', fontSize: '0.8rem', color: '#64748b', textAlign: 'center' }}>Low<br/>50.6%</div>
-                 <div style={{ position: 'absolute', top: '20%', left: '-30px', fontSize: '0.8rem', color: '#64748b', textAlign: 'center' }}>Medium<br/>31.5%</div>
-                 <div style={{ position: 'absolute', bottom: '20%', left: '-20px', fontSize: '0.8rem', color: '#64748b', textAlign: 'center' }}>High<br/>13.5%</div>
-                 <div style={{ position: 'absolute', bottom: '-10px', left: '40%', fontSize: '0.8rem', color: '#64748b', textAlign: 'center' }}>Critical<br/>4.4%</div>
-               </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={riskData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius={80}
+                    dataKey="value"
+                    stroke="none"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
+                    labelLine={false}
+                  >
+                    {riskData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => `${value}%`}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
          </div>
 

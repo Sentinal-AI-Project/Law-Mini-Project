@@ -55,6 +55,7 @@ const DashboardLayout = ({ children }) => {
   const handleNotifications = () => {
     window.alert('No new alerts in demo mode.');
   };
+
   return (
     <div className="flex" style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
       {/* Sidebar */}
@@ -130,7 +131,7 @@ const DashboardLayout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button onClick={handleNotifications} style={{ background: 'none', color: 'var(--text-muted)', position: 'relative' }}>
+            <button onClick={handleNotifications} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', position: 'relative', padding: 0 }}>
               <Bell size={20} />
               <span style={{ position: 'absolute', top: -2, right: -2, width: '8px', height: '8px', background: 'var(--accent-red)', borderRadius: '50%' }}></span>
             </button>

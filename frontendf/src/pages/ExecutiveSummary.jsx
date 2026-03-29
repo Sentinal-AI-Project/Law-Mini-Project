@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { AlertCircle, Download, FileText, Shield, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CustomDropdown from '../components/CustomDropdown';
 
 const ExecutiveSummary = () => {
   const navigate = useNavigate();
@@ -23,14 +24,10 @@ const ExecutiveSummary = () => {
     <DashboardLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#1e293b' }}>Executive Summary</h1>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Executive Summary</h1>
           <p style={{ color: 'var(--text-muted)' }}>Risk oversight and compliance monitoring</p>
         </div>
-        <select style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-          <option>Last 90 Days</option>
-          <option>Last 30 Days</option>
-          <option>This Year</option>
-        </select>
+        <CustomDropdown options={['Last 90 Days', 'Last 30 Days', 'This Year']} width="160px" />
       </div>
 
       <div style={{ background: '#dc2626', color: '#fff', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem' }}>

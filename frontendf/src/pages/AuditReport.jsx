@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Calendar, FileText, DownloadCloud, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
 import { reportsAPI, docsAPI } from '../services/api';
+import CustomDropdown from '../components/CustomDropdown';
 
 const AuditReport = () => {
   const [reports, setReports] = useState([]);
@@ -65,7 +66,7 @@ const AuditReport = () => {
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', color: '#1e293b' }}>Audit Report Generation</h1>
+        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Audit Report Generation</h1>
         <p style={{ color: 'var(--text-muted)' }}>Generate comprehensive compliance audit reports with risk analysis and findings summary.</p>
       </div>
 
@@ -91,15 +92,12 @@ const AuditReport = () => {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Compliance Framework</label>
-              <select
+              <CustomDropdown 
+                options={['SOX (Sarbanes-Oxley)', 'GDPR', 'HIPAA']} 
+                width="100%" 
                 value={framework}
-                onChange={(e) => setFramework(e.target.value)}
-                style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem' }}
-              >
-                <option value="SOX">SOX (Sarbanes-Oxley)</option>
-                <option value="GDPR">GDPR</option>
-                <option value="HIPAA">HIPAA</option>
-              </select>
+                onChange={setFramework}
+              />
             </div>
 
             <div style={{ marginBottom: '2rem' }}>

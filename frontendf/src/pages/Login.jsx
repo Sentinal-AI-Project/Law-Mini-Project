@@ -59,31 +59,31 @@ const Login = () => {
             Intelligent document analysis and compliance monitoring powered by advanced AI technology.
           </p>
           
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', marginTop: '1rem', minHeight: '300px' }}>
              <img 
-               src="https://framerusercontent.com/images/8r9m9T8yYtJ724R6xK2W6Z0g.png" 
+               src="/ai-illustration.png" 
                alt="AI Illustration" 
-               style={{ width: '100%', borderRadius: '24px', opacity: 0.9 }}
+               style={{ width: '100%', height: '100%', minHeight: '300px', objectFit: 'cover', borderRadius: '24px', opacity: 0.9, backgroundColor: 'rgba(255,255,255,0.1)' }}
              />
              {/* Read-only system badge matching image */}
              <div className="glass" style={{ 
-               position: 'absolute', 
-               bottom: '20px', 
-               left: '20px', 
-               right: '20px',
-               padding: '1.5rem',
-               borderRadius: '16px',
-               display: 'flex',
-               alignItems: 'center',
-               gap: '1rem'
+                position: 'absolute', 
+                bottom: '20px', 
+                left: '20px', 
+                right: '20px',
+                padding: '1.5rem',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
              }}>
-               <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '8px' }}>
-                 <Lock size={20} />
-               </div>
-               <div>
-                  <div style={{ fontWeight: 700 }}>Read-Only System</div>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>We never modify your documents. Our AI only reads and analyzes for compliance insights.</div>
-               </div>
+                <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '8px' }}>
+                  <Lock size={20} />
+                </div>
+                <div>
+                   <div style={{ fontWeight: 700 }}>Read-Only System</div>
+                   <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>We never modify your documents. Our AI only reads and analyzes for compliance insights.</div>
+                </div>
              </div>
           </div>
         </div>
@@ -169,7 +169,7 @@ const Login = () => {
             </button>
 
             <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: '#64748b' }}>
-              Don't have an account? <a href="mailto:sales@sentinel-law.com" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
+              Don't have an account? <a href="/#contact" style={{ color: '#3b82f6', fontWeight: 600 }}>Contact Sales</a>
             </div>
           </div>
         </motion.div>

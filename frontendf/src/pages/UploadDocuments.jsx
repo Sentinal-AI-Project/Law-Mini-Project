@@ -3,6 +3,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Info, UploadCloud, FileText, CheckCircle2, AlertTriangle, AlertCircle, Play, X } from 'lucide-react';
 import { docsAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import CustomDropdown from '../components/CustomDropdown';
 
 const UploadDocuments = () => {
   const navigate = useNavigate();
@@ -15,8 +16,17 @@ const UploadDocuments = () => {
     const selected = Array.from(e.target.files || []);
     if (!selected.length) return;
 
-    const newEntries = selected.map((f) => ({ file: f, status: 'uploading', docId: null, error: null, progress: 0 }));
-    setFiles((prev) => [...prev, ...newEntries]);
+    const newEntries = selected.map((f) => ({ 
+      file: f, 
+      status: 'uploading', 
+      docId: null, 
+      error: null, 
+      progress: 0,
+      name: f.name,
+      size: (f.size / (1024 * 1024)).toFixed(1) + ' MB',
+      type: 'Document'
+    }));
+    setFiles((prev) => [...newEntries, ...prev]);
 
     for (let i = 0; i < selected.length; i++) {
       const file = selected[i];
@@ -72,6 +82,15 @@ const UploadDocuments = () => {
     window.alert('Retry queued in demo mode.');
   };
 
+  const handleDragOver = (e) => e.preventDefault();
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileChange({ target: { files: e.dataTransfer.files } });
+    }
+  };
+
   const statusIcon = (entry) => {
     if (entry.status === 'uploaded' || entry.status === 'analyzing') return <CheckCircle2 size={16} />;
     if (entry.status === 'error') return <AlertTriangle size={16} />;
@@ -101,7 +120,7 @@ const UploadDocuments = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#1e293b' }}>Upload Documents</h1>
+              <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Upload Documents</h1>
               <p style={{ color: 'var(--text-muted)' }}>Upload documents for compliance analysis</p>
             </div>
             <button className="btn btn-primary" onClick={handleRunAnalysis} disabled={analyzing || !files.some((f) => f.status === 'uploaded')} style={{ background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: analyzing ? 0.7 : 1 }}>
@@ -118,25 +137,22 @@ const UploadDocuments = () => {
 
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 600, color: '#1e293b', fontSize: '1.1rem' }}>Compliance Framework</label>
-            <select
+            <CustomDropdown 
+              options={['Select Framework', 'SOC 2', 'GDPR', 'HIPAA', 'ISO 27001']} 
+              width="100%" 
               value={framework}
-              onChange={(e) => setFramework(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.95rem', color: '#475569' }}
-            >
-               <option value="">Select Framework</option>
-               <option value="SOC 2">SOC 2</option>
-               <option value="GDPR">GDPR</option>
-               <option value="HIPAA">HIPAA</option>
-               <option value="ISO 27001">ISO 27001</option>
-            </select>
+              onChange={setFramework}
+            />
           </div>
 
-          <div
-            className="card"
-            onClick={() => fileInputRef.current?.click()}
+          <div 
+            className="card" 
             style={{ background: '#fff', border: '1px dashed #cbd5e1', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
           >
-             <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.csv" style={{ display: 'none' }} onChange={handleFileChange} />
+             <input type="file" multiple ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept=".pdf,.doc,.docx,.txt,.csv" />
              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
                <UploadCloud size={32} color="#64748b" />
              </div>
@@ -159,8 +175,8 @@ const UploadDocuments = () => {
                     <FileText size={20} />
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>{entry.file.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{(entry.file.size / 1024 / 1024).toFixed(2)} MB</div>
+                    <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>{entry.name}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{entry.size} • {entry.type}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -176,7 +192,7 @@ const UploadDocuments = () => {
 
         {/* Right Sidebar - Upload History */}
         <div style={{ width: '380px', flexShrink: 0 }}>
-           <h3 style={{ fontSize: '1.25rem', color: '#1e293b', marginBottom: '1.5rem' }}>Upload History</h3>
+           <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)', marginBottom: '1.5rem' }}>Upload History</h3>
            
            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
              

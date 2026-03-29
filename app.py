@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 import os
 
-from audit_pipeline import audit_pipeline  # 👈 import your pipeline
+from audit_pipeline import audit_pipeline
 
 app = FastAPI()
 
@@ -12,28 +12,40 @@ def home():
 
 
 @app.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(
+    file: UploadFile = File(...),
+    policy: UploadFile = File(None)   # 👈 OPTIONAL POLICY
+):
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
+    # 🔹 Save contract file
     file_path = os.path.join(upload_dir, file.filename)
-
-    # Save file
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
 
-    # 🔥 CALL YOUR PIPELINE
-    results = audit_pipeline(file_path)
+    # 🔹 Save policy file (if provided)
+    policy_path = None
+    if policy:
+        policy_path = os.path.join(upload_dir, policy.filename)
+        with open(policy_path, "wb") as f:
+            content = await policy.read()
+            f.write(content)
+
+    # 🔥 CALL PIPELINE (with or without policy)
+    results = audit_pipeline(file_path, policy_path)
 
     return {
         "filename": file.filename,
         "file_path": file_path,
-        "results": results
+        "policy_used": policy.filename if policy else "No policy uploaded",
+        "results": results,
+        "report_download": "/download-report/"   # 👈 NEW LINK
     }
 
 
-# ✅ NEW ENDPOINT: Download report
+# ✅ DOWNLOAD REPORT
 @app.get("/download-report/")
 def download_report():
     file_path = "audit_report.pdf"

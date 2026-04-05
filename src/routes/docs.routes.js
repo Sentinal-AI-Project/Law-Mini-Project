@@ -3,11 +3,13 @@ const auth = require('../middleware/auth');
 const multer = require('multer');
 const {
     upload,
+    uploadMetadata,
     analyze,
     getFindings,
     listDocuments,
     getDocument,
 } = require('../controllers/docs.controller');
+
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -41,6 +43,7 @@ const uploadMiddleware = multer({
 router.get('/', auth, listDocuments);
 router.get('/:id', auth, getDocument);
 router.post('/upload', auth, uploadMiddleware.single('file'), upload);
+router.post('/upload-metadata', auth, uploadMetadata);
 router.post('/:id/analyze', auth, analyze);
 router.get('/:id/findings', auth, getFindings);
 

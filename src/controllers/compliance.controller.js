@@ -73,7 +73,7 @@ exports.getDashboard = async (req, res) => {
     try {
         const [docsRes, findingsRes] = await Promise.all([
             supabase.from('documents').select('id, status', { count: 'exact' }),
-            supabase.from('findings').select('id, severity, risk_type, confidence, created_at, document_id', { count: 'exact' }).gte('confidence', 0.7),
+            supabase.from('findings').select('id, severity, risk_type, confidence, created_at, document_id', { count: 'exact' }).gte('confidence', 0.1),
         ]);
 
         if (docsRes.error) throw docsRes.error;
@@ -200,5 +200,63 @@ exports.checkCompliance = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Compliance check failed', error: err.message });
+    }
+};
+
+/**
+ * GET /api/compliance/trends?days=90
+ * Returns daily aggregated finding counts and a derived risk score for the trend chart.
+ */
+exports.getTrends = async (req, res) => {
+    try {
+        const days = Math.min(parseInt(req.query.days) || 90, 365);
+        const since = new Date();
+        since.setDate(since.getDate() - days);
+
+        const { data: findings, error } = await supabase
+            .from('findings')
+            .select('id, severity, created_at')
+            .gte('created_at', since.toISOString())
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        // Build a map of date → { critical, high, medium, low }
+        const dayMap = {};
+        // Pre-fill every day in the range so we get a continuous line
+        for (let i = days; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().slice(0, 10);
+            dayMap[key] = { date: key, critical: 0, high: 0, medium: 0, low: 0, riskScore: 0, complianceRate: 100 };
+        }
+
+        for (const f of findings || []) {
+            const key = f.created_at.slice(0, 10);
+            if (dayMap[key]) {
+                dayMap[key][f.severity] = (dayMap[key][f.severity] || 0) + 1;
+            }
+        }
+
+        // Compute rolling risk score per day
+        const trend = Object.values(dayMap).map(d => {
+            const weight = d.critical * 4 + d.high * 3 + d.medium * 2 + d.low;
+            const maxW = (d.critical + d.high + d.medium + d.low) * 4 || 1;
+            const riskScore = Math.round((weight / maxW) * 100);
+            const complianceRate = Math.max(0, 100 - riskScore);
+            return {
+                date: d.date,
+                riskScore: isNaN(riskScore) ? 0 : riskScore,
+                complianceRate: isNaN(complianceRate) ? 100 : complianceRate,
+                critical: d.critical,
+                high: d.high,
+                medium: d.medium,
+                low: d.low,
+            };
+        });
+
+        res.json({ trend, days });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch trend data', error: err.message });
     }
 };

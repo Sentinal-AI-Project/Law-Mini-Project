@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText, AlertTriangle, HelpCircle, Clock } from 'lucide-react';
-import { complianceAPI, findingsAPI, docsAPI } from '../services/api';
+import { complianceAPI, docsAPI } from '../services/api';
+import { useComplianceData } from '../hooks/useComplianceData';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import CustomDropdown from '../components/CustomDropdown';
 
@@ -13,34 +14,27 @@ const riskData = [
 ];
 
 const ComplianceDashboard = () => {
-  const [stats, setStats] = useState(null);
+  const { stats, loading } = useComplianceData(30000);
   const [recentDocs, setRecentDocs] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchRecentDocs = async () => {
       try {
-        const [dashData, findingStats, docsData] = await Promise.allSettled([
-          complianceAPI.dashboard(),
-          findingsAPI.stats(),
-          docsAPI.list({ limit: 4 })
-        ]);
-        setStats({
-          dashboard: dashData.status === 'fulfilled' ? dashData.value : null,
-          findings: findingStats.status === 'fulfilled' ? findingStats.value : null,
-        });
-        if (docsData.status === 'fulfilled' && docsData.value.documents) {
-          setRecentDocs(docsData.value.documents);
+        const docsData = await docsAPI.list({ limit: 4 });
+        if (docsData.documents) {
+            setRecentDocs(docsData.documents);
         }
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch recent docs', err);
       }
     };
-    fetchStats();
+    fetchRecentDocs();
   }, []);
 
   const getRiskData = () => {
-    if (!stats?.findings?.severityStats || stats.findings.severityStats.length === 0) {
+    // findingsAPI.stats() returns { by_severity: [{_id, count}], ... }
+    const bySev = stats?.findings?.by_severity || stats?.findings?.severityStats;
+    if (!bySev || bySev.length === 0) {
       return [{ name: 'No data', value: 1, color: '#e2e8f0' }];
     }
     const mapping = {
@@ -49,10 +43,10 @@ const ComplianceDashboard = () => {
       high: { color: '#dc2626' },
       critical: { color: '#3b82f6' }
     };
-    return stats.findings.severityStats.map(s => ({
-      name: s.severity.charAt(0).toUpperCase() + s.severity.slice(1),
+    return bySev.map(s => ({
+      name: (s._id || s.severity || 'Unknown').charAt(0).toUpperCase() + (s._id || s.severity || 'Unknown').slice(1),
       value: s.count,
-      color: mapping[s.severity] || '#94a3b8'
+      color: mapping[(s._id || s.severity)?.toLowerCase()]?.color || '#94a3b8'
     }));
   };
 
@@ -74,19 +68,7 @@ const ComplianceDashboard = () => {
         <CustomDropdown options={['SOX Framework', 'GDPR', 'HIPAA']} width="170px" />
       </div>
 
-      <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
-          <span style={{ fontWeight: 600, color: '#1e293b' }}>System Status: Online</span>
-          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Live</span>
-        </div>
-        <div style={{ display: 'flex', gap: '3rem' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Queue Length</div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>{loading ? '—' : processingDocs}</div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>

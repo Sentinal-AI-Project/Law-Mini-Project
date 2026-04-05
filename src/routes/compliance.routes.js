@@ -8,6 +8,7 @@ const {
     createPolicy,
     getDashboard,
     checkCompliance,
+    getTrends,
 } = require('../controllers/compliance.controller');
 
 // Validation middleware
@@ -36,6 +37,7 @@ router.post(
 );
 
 router.get('/dashboard', auth, getDashboard);
+router.get('/trends', auth, getTrends);
 router.get('/check/:docId', auth, checkCompliance);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -38,6 +38,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('sl_user');
     setUser(null);
   };
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setUser(null);
+    };
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout }}>

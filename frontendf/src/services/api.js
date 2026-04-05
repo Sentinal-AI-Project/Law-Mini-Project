@@ -6,6 +6,7 @@
 const BASE_URL = '/api';
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
+
 const DEMO_FINDINGS = [
   {
     _id: 'finding-1',
@@ -202,6 +203,15 @@ const request = async (method, path, body = null, customHeaders = {}) => {
   try {
     const res = await fetch(`${BASE_URL}${path}`, options);
     const data = await res.json().catch(() => ({}));
+    
+    // Global 401 interceptor
+    if (res.status === 401) {
+      localStorage.removeItem('sl_token');
+      localStorage.removeItem('sl_user');
+      window.dispatchEvent(new Event('auth-expired'));
+      throw new Error(data.message || 'Invalid or expired token');
+    }
+
     if (!res.ok) throw new Error(data.message || `Request failed: ${res.status}`);
     return data;
   } catch (err) {
@@ -226,7 +236,15 @@ export const authAPI = {
 
   /** GET /api/auth/me */
   me: () => request('GET', '/auth/me'),
+
+  /** POST /api/auth/change-password */
+  changePassword: (oldPassword, newPassword) =>
+    request('POST', '/auth/change-password', { oldPassword, newPassword }),
+
+  /** DELETE /api/auth/account */
+  deleteAccount: () => request('DELETE', '/auth/account'),
 };
+
 
 // ─── Documents ────────────────────────────────────────────────────────────────
 
@@ -240,14 +258,32 @@ export const docsAPI = {
   /** GET /api/docs/:id */
   get: (id) => request('GET', `/docs/${id}`),
 
-  /** POST /api/docs/upload — multipart */
-  upload: (file, docType = 'contract') => {
-    const form = new FormData();
-    form.append('file', file);
-    form.append('doc_type', docType);
-
-    return request('POST', '/docs/upload', form);
+  /**
+   * POST /api/docs/upload — Upload file via backend (uses service role key securely)
+   * Sends file as multipart/form-data; backend stores it in Supabase Storage.
+   */
+  upload: async (file, docType = 'contract', frameworks = []) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('doc_type', docType);
+    formData.append('frameworks', JSON.stringify(frameworks));
+    // Use raw fetch so we can send FormData without Content-Type header override
+    const token = localStorage.getItem('sl_token');
+    const res = await fetch(`${BASE_URL}/docs/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || `Upload failed: ${res.status}`);
+    return data;
   },
+
+  /** POST /api/docs/upload-metadata — register the uploaded file (legacy serverless path) */
+  uploadMetadata: (payload) => {
+    return request('POST', '/docs/upload-metadata', payload);
+  },
+
 
   /** POST /api/docs/:id/analyze */
   analyze: (id) => request('POST', `/docs/${id}/analyze`),
@@ -273,6 +309,9 @@ export const findingsAPI = {
 
   /** GET /api/findings/:id */
   get: (id) => request('GET', `/findings/${id}`),
+
+  /** PATCH /api/findings/:id */
+  update: (id, payload) => request('PATCH', `/findings/${id}`, payload),
 };
 
 // ─── Reports ──────────────────────────────────────────────────────────────────
@@ -298,12 +337,24 @@ export const complianceAPI = {
   /** GET /api/compliance/dashboard */
   dashboard: () => request('GET', '/compliance/dashboard'),
 
+  /** GET /api/compliance/trends?days=N */
+  trends: (days = 90) => request('GET', `/compliance/trends?days=${days}`),
+
   /** GET /api/compliance/policies */
   listPolicies: () => request('GET', '/compliance/policies'),
 
   /** GET /api/compliance/check/:docId */
   check: (docId) => request('GET', `/compliance/check/${docId}`),
 };
+
+
+// ─── User Activity ───────────────────────────────────────────
+
+export const userAPI = {
+  /** GET /api/user/activity */
+  getActivity: () => request('GET', '/user/activity'),
+};
+
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 

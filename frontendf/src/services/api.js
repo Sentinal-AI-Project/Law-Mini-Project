@@ -359,6 +359,21 @@ export const userAPI = {
   
   /** PUT /api/user/profile */
   updateProfile: (payload) => request('PUT', '/user/profile', payload),
+
+  /** POST /api/user/avatar — upload a profile picture (image file) */
+  uploadAvatar: async (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const token = localStorage.getItem('sl_token');
+    const res = await fetch(`${BASE_URL}/user/avatar`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || `Avatar upload failed: ${res.status}`);
+    return data;
+  },
 };
 
 

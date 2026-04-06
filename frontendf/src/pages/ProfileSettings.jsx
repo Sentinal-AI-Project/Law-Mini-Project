@@ -1,17 +1,21 @@
 import React from 'react';
-import { Camera, Edit2, ShieldAlert, Key, User, Smartphone, Trash2, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
+import { Camera, AlertTriangle, CheckCircle, Lock, Loader, Trash2 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import { authAPI, userAPI } from '../services/api';
 
 const ProfileSettings = () => {
   const { user, logout, updateUser } = useAuth();
-  console.log('Current User State:', user);
+  const avatarInputRef = React.useRef(null);
+
+  const [localPreview, setLocalPreview] = React.useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
+  const [avatarError, setAvatarError] = React.useState(null);
+
   const [activityData, setActivityData] = React.useState({ items: [], needsMigration: false, error: null });
   const [loading, setLoading] = React.useState(true);
   const [passForm, setPassForm] = React.useState({ old: '', new: '', confirm: '' });
   
-  // Real Profile State
   const [profileData, setProfileData] = React.useState({
     name: '',
     email: '',
@@ -33,14 +37,12 @@ const ProfileSettings = () => {
   const fetchActivity = React.useCallback(async () => {
     try {
       const data = await userAPI.getActivity();
-      console.log('Activity Data Fetched:', data);
       setActivityData({
         items: data.activity || [],
         needsMigration: !!data.needsMigration,
         error: null
       });
     } catch (err) {
-      console.error('Failed to fetch activity:', err);
       setActivityData(prev => ({ ...prev, error: err.message }));
     } finally {
       setLoading(false);
@@ -51,6 +53,51 @@ const ProfileSettings = () => {
     fetchActivity();
   }, [fetchActivity]);
 
+  // ── Avatar helpers ────────────────────────────────────────
+  const currentAvatarSrc = localPreview
+    || user?.avatar_url
+    || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'default')}`;
+
+  const handleAvatarClick = () => {
+    setAvatarError(null);
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate on client side too
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select an image file (JPG, PNG, GIF, WEBP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Image must be smaller than 5 MB.');
+      return;
+    }
+
+    // Optimistic preview
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
+    setUploadingAvatar(true);
+    setAvatarError(null);
+
+    try {
+      const resp = await userAPI.uploadAvatar(file);
+      updateUser(resp.user);          // push new avatar_url into auth context
+      setLocalPreview(null);          // let the context value take over
+    } catch (err) {
+      setAvatarError(err.message || 'Upload failed. Please try again.');
+      setLocalPreview(null);          // revert preview on failure
+    } finally {
+      setUploadingAvatar(false);
+      // Reset input so same file can be re-selected after an error
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
+  // ── Profile / password handlers ───────────────────────────
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
@@ -59,10 +106,9 @@ const ProfileSettings = () => {
         phone: profileData.phone,
         department: profileData.department
       });
-      
       updateUser(resp.user);
       window.alert('Profile updated successfully!');
-      fetchActivity(); // Refresh logs
+      fetchActivity();
     } catch (err) {
       window.alert(err.message || 'Failed to update profile.');
     }
@@ -94,6 +140,7 @@ const ProfileSettings = () => {
     }
   };
 
+
   return (
     <DashboardLayout>
       <div style={{ marginBottom: '2rem' }}>
@@ -107,14 +154,72 @@ const ProfileSettings = () => {
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
               <div style={{ position: 'relative' }}>
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'default')}`} alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f1f5f9', border: '3px solid #fff', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                <button onClick={() => window.alert('Avatar upload is coming soon.')} style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', borderRadius: '50%', background: '#4f46e5', color: '#fff', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                {/* Hidden file input */}
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarChange}
+                />
+
+                {/* Avatar image */}
+                <img
+                  src={currentAvatarSrc}
+                  alt="Profile"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    background: '#f1f5f9',
+                    border: '3px solid #fff',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                    objectFit: 'cover',
+                    opacity: uploadingAvatar ? 0.5 : 1,
+                    transition: 'opacity 0.2s',
+                  }}
+                />
+
+                {/* Spinner overlay while uploading */}
+                {uploadingAvatar && (
+                  <div style={{
+                    position: 'absolute', inset: 0, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '50%',
+                  }}>
+                    <Loader size={22} color="#4f46e5" style={{ animation: 'spin 1s linear infinite' }} />
+                  </div>
+                )}
+
+                {/* Camera button */}
+                <button
+                  onClick={handleAvatarClick}
+                  disabled={uploadingAvatar}
+                  title="Change profile picture"
+                  style={{
+                    position: 'absolute', bottom: 0, right: 0,
+                    width: '28px', height: '28px', borderRadius: '50%',
+                    background: uploadingAvatar ? '#94a3b8' : '#4f46e5',
+                    color: '#fff', border: '2px solid #fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
+                    transition: 'background 0.2s',
+                  }}
+                >
                   <Camera size={14} />
                 </button>
               </div>
+
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#1e293b', marginBottom: '0.25rem' }}>{user?.name || 'User'}</h2>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.75rem' }}>{user?.email || 'email@example.com'}</p>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{user?.email || 'email@example.com'}</p>
+                {/* Avatar error message */}
+                {avatarError && (
+                  <p style={{ fontSize: '0.75rem', color: '#dc2626', margin: '0 0 0.5rem' }}>{avatarError}</p>
+                )}
+                {uploadingAvatar && (
+                  <p style={{ fontSize: '0.75rem', color: '#4f46e5', margin: '0 0 0.5rem' }}>Uploading avatar…</p>
+                )}
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.75rem', background: '#eff6ff', color: '#3b82f6', borderRadius: '20px', textTransform: 'capitalize' }}>{user?.role || 'analyst'}</span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '20px' }}>Active</span>
@@ -122,6 +227,7 @@ const ProfileSettings = () => {
               </div>
             </div>
           </div>
+
 
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '1.5rem' }}>Personal Information</h3>
@@ -238,6 +344,10 @@ const ProfileSettings = () => {
             }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover {
               background: #94a3b8;
+            }
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to   { transform: rotate(360deg); }
             }
           `}</style>
 

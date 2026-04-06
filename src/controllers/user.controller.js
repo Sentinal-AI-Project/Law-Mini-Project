@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const path = require('path');
 
 /**
  * GET /api/user/activity
@@ -108,6 +109,63 @@ exports.logActivity = async (userId, action, details) => {
     } catch (err) {
         console.error('Audit Log Runtime Error:', err.message);
         throw err;
+    }
+};
+
+/**
+ * POST /api/user/avatar
+ * Upload a profile avatar image for the current user.
+ * Accepts multipart/form-data with field name "avatar".
+ */
+exports.uploadAvatar = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image file provided. Use field name "avatar".' });
+        }
+
+        const userId = req.user.id;
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+        const storagePath = `${userId}/avatar${ext}`;
+
+        // Upload to Supabase Storage bucket "avatars" (upsert so re-uploads replace the old file)
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(storagePath, req.file.buffer, {
+                contentType: req.file.mimetype,
+                upsert: true,
+            });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(storagePath);
+
+        // Append cache-busting query so browsers refresh the image immediately
+        const avatarUrl = `${urlData.publicUrl}?v=${Date.now()}`;
+
+        // Persist avatar_url on the user record
+        const { data: user, error: updateError } = await supabase
+            .from('users')
+            .update({ avatar_url: avatarUrl })
+            .eq('id', userId)
+            .select('id, name, email, role, avatar_url, phone, department, created_at')
+            .single();
+
+        if (updateError) throw updateError;
+
+        // Log activity (best-effort)
+        try {
+            await exports.logActivity(userId, 'Avatar Updated');
+        } catch (logErr) {
+            console.warn('Avatar log failed:', logErr.message);
+        }
+
+        res.json({ message: 'Avatar updated successfully', user });
+    } catch (err) {
+        console.error('uploadAvatar Error:', err);
+        res.status(500).json({ message: 'Failed to upload avatar', error: err.message });
     }
 };
 

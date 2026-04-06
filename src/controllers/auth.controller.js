@@ -209,26 +209,58 @@ exports.changePassword = async (req, res) => {
 
 /**
  * DELETE /api/auth/account
- * Delete current user's account
+ * Delete current user's account and all associated data (including storage files)
  */
 exports.deleteAccount = async (req, res) => {
     try {
-        // In a real app, we might want to delete related documents first
-        // But here we'll assume foreign key cascades or simple deletion
+        const userId = req.user.id;
+
+        // 1. Log account deletion activity (Log BEFORE deletion to avoid FK constraint issues)
+        const userController = require('./user.controller');
+        try {
+            await userController.logActivity(userId, 'Account Deletion Requested');
+        } catch (logErr) {
+            console.warn('Final activity log failed, continuing with deletion:', logErr.message);
+        }
+
+        // 2. Fetch all documents to clean up Supabase storage
+        // Even though DB records cascade delete, we must manually remove physical files from buckets
+        const { data: docs, error: fetchDocsError } = await supabase
+            .from('documents')
+            .select('source_url')
+            .eq('upload_user_id', userId);
+
+        if (!fetchDocsError && docs && docs.length > 0) {
+            const storagePaths = docs
+                .map(doc => {
+                    const urlParts = doc.source_url?.split('/documents/');
+                    return urlParts && urlParts.length > 1 ? decodeURIComponent(urlParts[1]) : null;
+                })
+                .filter(path => path !== null);
+
+            if (storagePaths.length > 0) {
+                const { error: storageError } = await supabase.storage
+                    .from('documents')
+                    .remove(storagePaths);
+                
+                if (storageError) {
+                    console.warn(`Failed to cleanup storage for user ${userId}:`, storageError.message);
+                }
+            }
+        }
+
+        // 3. Delete the user (This triggers ON DELETE CASCADE in the database for docs, findings, reports)
         const { error } = await supabase
             .from('users')
             .delete()
-            .eq('id', req.user.id);
+            .eq('id', userId);
 
         if (error) throw error;
 
-        // Log account deletion activity (internal/audit context before session ends)
-        const userController = require('./user.controller');
-        await userController.logActivity(req.user.id, 'Account Deleted');
-
-        res.json({ message: 'Account deleted successfully' });
+        res.json({ message: 'Account and all associated documents and reports deleted successfully' });
 
     } catch (err) {
+        console.error('Delete Account Error:', err);
         res.status(500).json({ message: 'Failed to delete account', error: err.message });
     }
 };

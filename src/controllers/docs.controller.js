@@ -392,3 +392,66 @@ exports.getDocument = async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch document', error: err.message });
     }
 };
+/**
+ * DELETE /api/docs/:id
+ * Delete a document and its associated findings/reports
+ */
+exports.deleteDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Get document to check ownership and get storage path
+        const { data: doc, error: docError } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (docError) throw docError;
+        if (!doc) return res.status(404).json({ message: 'Document not found' });
+
+        // Security check: must be the uploader or an admin (if roles added)
+        if (doc.upload_user_id !== req.user.id) {
+            return res.status(403).json({ message: 'You do not have permission to delete this document' });
+        }
+
+        // 2. Delete associated findings
+        await supabase.from('findings').delete().eq('document_id', id);
+
+        // 3. Delete associated reports
+        await supabase.from('reports').delete().eq('document_id', id);
+
+        // 4. Delete the document entry
+        const { error: deleteError } = await supabase
+            .from('documents')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) throw deleteError;
+
+        // 5. Delete from Supabase storage if we have a path
+        if (doc.source_url) {
+            try {
+                // Extract path from public URL if possible (or we could store path in DB)
+                // For now, we'll try to extract it. URL format is usually .../storage/v1/object/public/documents/PATH
+                const urlParts = doc.source_url.split('/documents/');
+                if (urlParts.length > 1) {
+                    const storagePath = decodeURIComponent(urlParts[1]);
+                    await supabase.storage.from('documents').remove([storagePath]);
+                }
+            } catch (storageErr) {
+                console.warn('Failed to delete file from storage:', storageErr.message);
+                // We don't fail the whole request if storage delete fails
+            }
+        }
+
+        // 6. Log activity
+        const userController = require('./user.controller');
+        await userController.logActivity(req.user.id, 'Document Deleted', { filename: doc.filename });
+
+        res.json({ message: 'Document and all associated data deleted successfully' });
+    } catch (err) {
+        console.error('Delete Document Error:', err);
+        res.status(500).json({ message: 'Failed to delete document', error: err.message });
+    }
+};

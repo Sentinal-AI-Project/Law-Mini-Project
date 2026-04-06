@@ -8,6 +8,7 @@ const {
     getFindings,
     listDocuments,
     getDocument,
+    deleteDocument,
 } = require('../controllers/docs.controller');
 
 
@@ -46,5 +47,6 @@ router.post('/upload', auth, uploadMiddleware.single('file'), upload);
 router.post('/upload-metadata', auth, uploadMetadata);
 router.post('/:id/analyze', auth, analyze);
 router.get('/:id/findings', auth, getFindings);
+router.delete('/:id', auth, deleteDocument);
 
 module.exports = router;

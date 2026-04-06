@@ -293,6 +293,9 @@ export const docsAPI = {
     const qs = new URLSearchParams(params).toString();
     return request('GET', `/docs/${id}/findings${qs ? `?${qs}` : ''}`);
   },
+
+  /** DELETE /api/docs/:id */
+  delete: (id) => request('DELETE', `/docs/${id}`),
 };
 
 // ─── Findings ─────────────────────────────────────────────────────────────────
@@ -353,6 +356,9 @@ export const complianceAPI = {
 export const userAPI = {
   /** GET /api/user/activity */
   getActivity: () => request('GET', '/user/activity'),
+  
+  /** PUT /api/user/profile */
+  updateProfile: (payload) => request('PUT', '/user/profile', payload),
 };
 
 

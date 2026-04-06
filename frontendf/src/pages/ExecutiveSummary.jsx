@@ -40,7 +40,7 @@ const TrendTooltip = ({ active, payload, label }) => {
 const ExecutiveSummary = () => {
   const navigate = useNavigate();
   const [trendWindow, setTrendWindow] = useState('90D');
-  const { stats, loading } = useComplianceData(0); // We will manually manage refresh for trends, or use 0 for no polling just on stats
+  const { stats, loading, refetch } = useComplianceData(30000); 
   const [trendLoading, setTrendLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
@@ -52,11 +52,9 @@ const ExecutiveSummary = () => {
       const days = WINDOW_DAYS[trendWindow] || 90;
       const res = await complianceAPI.trends(days);
       if (res?.trend) {
-        // Downsample to max ~15 data points for readability
         const raw = res.trend;
         const step = Math.max(1, Math.floor(raw.length / 15));
         const sampled = raw.filter((_, i) => i % step === 0 || i === raw.length - 1);
-        // Format date labels
         const formatted = sampled.map(d => ({
           ...d,
           label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -75,10 +73,8 @@ const ExecutiveSummary = () => {
   // Initial fetch
   useEffect(() => { fetchTrends(); }, [fetchTrends]);
 
-  // Auto-refresh every 60 seconds
+  // Auto-refresh logic (hook handles stats, we handle trends)
   useEffect(() => {
-    fetchTrends();
-
     const interval = setInterval(() => {
       fetchTrends();
       setLastRefresh(new Date());
@@ -87,9 +83,9 @@ const ExecutiveSummary = () => {
   }, [fetchTrends]);
 
   const handleDownloadSummary = () => {
-    const score = stats?.complianceScore || 0;
+    const score = stats?.dashboard?.complianceScore || 0;
     const blob = new Blob(
-      [`Sentinel Law — Executive Summary\nGenerated: ${new Date().toLocaleString()}\n\nOverall Risk Score: ${100 - score}/100\nCompliance Rate: ${score}%\nTotal Violations: ${stats?.totalFindings || 0}\nDocuments Processed: ${stats?.documents?.completed || 0}\n`],
+      [`Sentinel Law — Executive Summary\nGenerated: ${new Date().toLocaleString()}\n\nOverall Risk Score: ${100 - score}/100\nCompliance Rate: ${score}%\nTotal Violations: ${stats?.dashboard?.totalFindings || 0}\nDocuments Processed: ${stats?.dashboard?.completedDocs || stats?.dashboard?.totalDocuments || 0}\n`],
       { type: 'text/plain' }
     );
     const url = URL.createObjectURL(blob);
@@ -102,14 +98,15 @@ const ExecutiveSummary = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Determine if we have real trend data (any day with a non-zero reading)
+  // Determine if we have real trend data 
   const hasTrendData = trendData.some(d => d.riskScore > 0 || d.complianceRate < 100);
 
   // Build bar chart data from findings by severity
   const severityData = (() => {
-    if (!stats?.findings?.by_severity?.length) return [];
+    const bySev = stats?.dashboard?.findings?.by_severity || stats?.findings?.by_severity;
+    if (!bySev?.length) return [];
     const map = { critical: 0, high: 0, medium: 0, low: 0 };
-    for (const s of stats.findings.by_severity) { map[s._id] = s.count; }
+    for (const s of bySev) { map[s._id?.toLowerCase()] = s.count; }
     return [
       { name: 'Critical', count: map.critical, fill: '#dc2626' },
       { name: 'High', count: map.high, fill: '#f59e0b' },
@@ -127,13 +124,13 @@ const ExecutiveSummary = () => {
           <p style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Risk oversight and compliance monitoring
             <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-              · Auto-refresh every 30s · Last: {lastRefresh.toLocaleTimeString()}
+               · Auto-refresh · Last: {lastRefresh.toLocaleTimeString()}
             </span>
           </p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button
-            onClick={() => { fetchDashboard(); fetchTrends(); }}
+            onClick={() => { refetch(); fetchTrends(); }}
             style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             title="Refresh now"
           >
@@ -144,7 +141,7 @@ const ExecutiveSummary = () => {
       </div>
 
       {/* Critical alert banner */}
-      {stats?.recent_critical?.length > 0 && (
+      {stats?.dashboard?.recent_critical?.length > 0 && (
         <div style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', boxShadow: '0 4px 15px rgba(220,38,38,0.3)' }}>
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
             <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '50%' }}>
@@ -152,17 +149,13 @@ const ExecutiveSummary = () => {
             </div>
             <div>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 700 }}>Critical Findings Alert</h2>
-              <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>{stats.recent_critical.length} high-priority compliance violations require immediate attention</p>
-              <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem', fontWeight: 500 }}>
-                {stats.recent_critical.slice(0, 3).map(f => (
-                  <span key={f.id}>{f.risk_type}</span>
-                ))}
-              </div>
+              <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>{stats.dashboard.recent_critical.length} high-priority compliance violations require immediate attention</p>
             </div>
           </div>
           <button onClick={() => navigate('/findings')} style={{ background: '#fff', color: '#dc2626', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
         </div>
       )}
+
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -198,10 +191,10 @@ const ExecutiveSummary = () => {
       {/* KPI stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
-          { label: 'Overall Risk Score', value: loading ? '—' : `${100 - (stats?.complianceScore || 0)}`, suffix: '/100', icon: <Shield size={24} color="#3b82f6" />, bg: '#eff6ff' },
-          { label: 'Open Violations', value: loading ? '—' : (stats?.totalFindings || 0), icon: <AlertTriangle size={24} color="#d97706" />, bg: '#fef3c7' },
-          { label: 'Compliance Rate', value: loading ? '—' : `${stats?.complianceScore || 0}%`, icon: <CheckCircle size={24} color="#10b981" />, bg: '#ecfdf5' },
-          { label: 'Documents Processed', value: loading ? '—' : (stats?.documents?.completed || 0), icon: <Clock size={24} color="#9333ea" />, bg: '#f3e8ff' },
+          { label: 'Overall Risk Score', value: loading ? '—' : `${100 - (stats?.dashboard?.complianceScore || 0)}`, suffix: '/100', icon: <Shield size={24} color="#3b82f6" />, bg: '#eff6ff' },
+          { label: 'Open Violations', value: loading ? '—' : (stats?.dashboard?.totalFindings || 0), icon: <AlertTriangle size={24} color="#d97706" />, bg: '#fef3c7' },
+          { label: 'Compliance Rate', value: loading ? '—' : `${stats?.dashboard?.complianceScore || 0}%`, icon: <CheckCircle size={24} color="#10b981" />, bg: '#ecfdf5' },
+          { label: 'Documents Processed', value: loading ? '—' : (stats?.dashboard?.completedDocs || stats?.dashboard?.totalDocuments || 0), icon: <Clock size={24} color="#9333ea" />, bg: '#f3e8ff' },
         ].map(({ label, value, suffix, icon, bg }) => (
           <div key={label} className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -302,11 +295,11 @@ const ExecutiveSummary = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             {loading ? (
               <div style={{ color: '#64748b', textAlign: 'center' }}>Loading violations...</div>
-            ) : (!stats?.findings?.by_risk_type || stats.findings.by_risk_type.length === 0) ? (
+            ) : (!stats?.dashboard?.findings?.by_risk_type || stats.dashboard.findings.by_risk_type.length === 0) ? (
               <div style={{ color: '#64748b', textAlign: 'center', padding: '1rem' }}>No violations found.</div>
             ) : (
-              stats.findings.by_risk_type.slice(0, 5).map((v, i) => {
-                const total = stats.findings.total || 1;
+              stats.dashboard.findings.by_risk_type.slice(0, 5).map((v, i) => {
+                const total = stats.dashboard.totalFindings || 1;
                 const pct = Math.round((v.count / total) * 100);
                 const color = i === 0 ? '#ef4444' : (i < 3 ? '#f59e0b' : '#3b82f6');
                 return (
@@ -326,6 +319,7 @@ const ExecutiveSummary = () => {
           </div>
         </div>
       </div>
+
 
       {/* Severity Distribution Bar Chart */}
       <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>

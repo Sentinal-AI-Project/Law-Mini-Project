@@ -36,8 +36,11 @@ const attachEntityMaps = async (findings) => {
         severity: row.severity,
         confidence: row.confidence,
         description: row.description,
+        explanation: row.explanation,
         evidence_snippet: row.evidence_snippet,
         policy_ref_id: policyMap.get(row.policy_ref_id) || row.policy_ref_id,
+        notes: row.notes,
+        status: row.status,
         created_at: row.created_at,
     }));
 };
@@ -95,7 +98,7 @@ exports.getFinding = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at')
+            .select('id, document_id, clause_id, risk_type, severity, confidence, description, explanation, evidence_snippet, policy_ref_id, created_at, notes, status')
             .eq('id', req.params.id)
             .maybeSingle();
 

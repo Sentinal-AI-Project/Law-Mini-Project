@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search, AlertTriangle, MessageSquare, Check, ExternalLink, DownloadCloud } from 'lucide-react';
+import { Search, AlertTriangle, MessageSquare, Check, ExternalLink, DownloadCloud, X } from 'lucide-react';
 import { findingsAPI, docsAPI } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const severityColor = (s) => {
   const lowS = (s || 'low').toLowerCase();
@@ -20,8 +22,9 @@ const Findings = () => {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState('');
 
+  const [searchParams] = useSearchParams();
   const [docs, setDocs] = useState([]);
-  const [selectedDocId, setSelectedDocId] = useState('All');
+  const [selectedDocId, setSelectedDocId] = useState(searchParams.get('document_id') || 'All');
 
   useEffect(() => {
     const initData = async () => {
@@ -76,9 +79,14 @@ const Findings = () => {
     }
   };
 
+  const handleShowNoteModal = () => {
+    setNoteText(activeFinding?.notes || '');
+    setShowNoteInput(true);
+  };
+
   const handleAddNote = async () => {
-    if (!noteText.trim() || !selectedFindingId) return;
-    const currentNote = noteText;
+    if (!selectedFindingId) return;
+    const currentNote = noteText.trim();
     
     setFindings(prev => prev.map(f => f._id === selectedFindingId ? { ...f, notes: currentNote } : f));
     setShowNoteInput(false);
@@ -87,7 +95,9 @@ const Findings = () => {
     try {
       await findingsAPI.update(selectedFindingId, { notes: currentNote });
     } catch (err) {
-      console.error('Failed to save note', err);
+      console.error('Failed to persist note', err);
+      // alert could be too intrusive but we want them to know
+      // window.alert('Note saved locally but failed to reach database. Please check your connection.');
     }
   };
 
@@ -181,7 +191,7 @@ const Findings = () => {
             </div>
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="custom-scrollbar scroll-container" style={{ flex: 1, overflowY: 'auto' }}>
             {loading ? (
               <p style={{ padding: '1.5rem', color: '#94a3b8' }}>Loading findings…</p>
             ) : error ? (
@@ -224,7 +234,7 @@ const Findings = () => {
         </div>
 
         {/* Right Side - Finding Details */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', overflowY: 'auto' }}>
+        <div className="custom-scrollbar scroll-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', overflowY: 'auto' }}>
           {!activeFinding ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: '#94a3b8' }}>
               Select a finding to view details.
@@ -247,7 +257,7 @@ const Findings = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <button 
-                    onClick={() => setShowNoteInput(!showNoteInput)} 
+                    onClick={handleShowNoteModal} 
                     className="btn btn-outline" 
                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', background: '#f1f5f9', border: 'none', cursor: 'pointer' }}
                   >
@@ -297,20 +307,55 @@ const Findings = () => {
                 </div>
               )}
 
-              {showNoteInput && (
-                <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                  <textarea 
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Enter your investigation notes or remediation details here..."
-                    style={{ width: '100%', height: '100px', padding: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '1rem', resize: 'vertical' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                    <button onClick={() => setShowNoteInput(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
-                    <button onClick={handleAddNote} style={{ padding: '0.5rem 1rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}>Save Note</button>
-                  </div>
-                </div>
-              )}
+              <AnimatePresence>
+                {showNoteInput && (
+                  <>
+                    <motion.div 
+                      key="overlay"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      exit={{ opacity: 0 }}
+                      style={{ position: 'fixed', inset: 0, background: '#0f172a', zIndex: 1000 }}
+                      onClick={() => setShowNoteInput(false)}
+                    />
+                    <motion.div 
+                      key="modal"
+                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                      style={{ 
+                        position: 'fixed', 
+                        top: '50%', 
+                        left: '50%', 
+                        transform: 'translate(-50%, -50%)', 
+                        width: '500px', 
+                        background: '#fff', 
+                        borderRadius: '12px', 
+                        padding: '2rem', 
+                        zIndex: 1001,
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: 600 }}>Investigation Note</h3>
+                        <button onClick={() => setShowNoteInput(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}><X size={20} color="#64748b" /></button>
+                      </div>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Enter internal notes, remediation steps, or evidence for this finding.</p>
+                      <textarea 
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Type your notes here..."
+                        autoFocus
+                        style={{ width: '100%', height: '150px', padding: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '1.5rem', resize: 'none', fontSize: '0.95rem' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <button onClick={() => setShowNoteInput(false)} style={{ padding: '0.6rem 1.25rem', background: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, color: '#475569' }}>Cancel</button>
+                        <button onClick={handleAddNote} style={{ padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Save Note</button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
 
               {activeFinding.policy_ref_id && (
                 <div>
@@ -333,6 +378,30 @@ const Findings = () => {
           )}
         </div>
       </div>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #94a3b8;
+          border-radius: 4px;
+          border: 2px solid #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+        
+        /* Ensure parents use the class */
+        .scroll-container {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #f1f5f9;
+        }
+      `}</style>
     </DashboardLayout>
   );
 };

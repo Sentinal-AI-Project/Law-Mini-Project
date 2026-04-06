@@ -131,16 +131,13 @@ const DashboardLayout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button onClick={handleNotifications} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', position: 'relative', padding: 0 }}>
-              <Bell size={20} />
-              <span style={{ position: 'absolute', top: -2, right: -2, width: '8px', height: '8px', background: 'var(--accent-red)', borderRadius: '50%' }}></span>
-            </button>
             <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }}></div>
             <div className="flex items-center gap-2">
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name || 'User'}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'analyst'}</div>
               </div>
+
               <img 
                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'default')}`}
                 alt="Avatar" 

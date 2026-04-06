@@ -24,7 +24,7 @@ app.use(cors({
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 2000, // limit each IP to 2000 requests per windowMs (development friendly)
     message: 'Too many requests from this IP, please try again after 15 minutes'
 });
 app.use('/api', limiter);
@@ -50,6 +50,8 @@ app.use('/api/docs', require('./routes/docs.routes'));
 app.use('/api/findings', require('./routes/findings.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
 app.use('/api/compliance', require('./routes/compliance.routes'));
+app.use('/api/user', require('./routes/user.routes'));
+
 
 // ─── 404 Handler ─────────────────────────────────────────
 app.use((req, res) => {
@@ -79,8 +81,9 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
-    // Verify Supabase connectivity
-    await connectDB();
+    // Verify Supabase connectivity - TEMPORARILY DISABLED due to DNS resolution issues
+    // await connectDB();
+    console.warn('⚠️  WARNING: Skipping Supabase pre-flight check. Database operations may fail if connectivity is not restored.');
 
     // Ensure upload directory exists
     storageService.ensureUploadDir();

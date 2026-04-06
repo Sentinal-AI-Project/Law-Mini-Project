@@ -1,10 +1,98 @@
 import React from 'react';
+import { Camera, Edit2, ShieldAlert, Key, User, Smartphone, Trash2, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Camera, Edit2, ShieldAlert, Key, User, Download, Settings, Smartphone, Trash2, AlertTriangle } from 'lucide-react';
-import CustomDropdown from '../components/CustomDropdown';
+import { useAuth } from '../context/AuthContext';
+import { authAPI, userAPI } from '../services/api';
 
 const ProfileSettings = () => {
-  const notify = (msg) => window.alert(msg);
+  const { user, logout, updateUser } = useAuth();
+  console.log('Current User State:', user);
+  const [activityData, setActivityData] = React.useState({ items: [], needsMigration: false, error: null });
+  const [loading, setLoading] = React.useState(true);
+  const [passForm, setPassForm] = React.useState({ old: '', new: '', confirm: '' });
+  
+  // Real Profile State
+  const [profileData, setProfileData] = React.useState({
+    name: '',
+    email: '',
+    phone: '',
+    department: ''
+  });
+
+  React.useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        department: user.department || 'Compliance & Legal'
+      });
+    }
+  }, [user]);
+
+  const fetchActivity = React.useCallback(async () => {
+    try {
+      const data = await userAPI.getActivity();
+      console.log('Activity Data Fetched:', data);
+      setActivityData({
+        items: data.activity || [],
+        needsMigration: !!data.needsMigration,
+        error: null
+      });
+    } catch (err) {
+      console.error('Failed to fetch activity:', err);
+      setActivityData(prev => ({ ...prev, error: err.message }));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchActivity();
+  }, [fetchActivity]);
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const resp = await userAPI.updateProfile({
+        name: profileData.name,
+        phone: profileData.phone,
+        department: profileData.department
+      });
+      
+      updateUser(resp.user);
+      window.alert('Profile updated successfully!');
+      fetchActivity(); // Refresh logs
+    } catch (err) {
+      window.alert(err.message || 'Failed to update profile.');
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passForm.new !== passForm.confirm) {
+        return window.alert('New passwords do not match.');
+    }
+    try {
+        await authAPI.changePassword(passForm.old, passForm.new);
+        window.alert('Password updated successfully!');
+        setPassForm({ old: '', new: '', confirm: '' });
+        fetchActivity();
+    } catch (err) {
+        window.alert(err.message || 'Failed to update password.');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you absolutely sure? This action is irreversible.')) return;
+    try {
+      await authAPI.deleteAccount();
+      window.alert('Account deleted.');
+      logout();
+    } catch (err) {
+      window.alert('Failed to delete account.');
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -14,178 +102,160 @@ const ProfileSettings = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '2rem' }}>
-        {/* Left Column - Main Settings */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* Header Profile Card */}
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
               <div style={{ position: 'relative' }}>
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=JohnAnderson" alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f1f5f9', border: '3px solid #fff', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                <button onClick={() => notify('Avatar upload is enabled in demo mode.')} style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', borderRadius: '50%', background: '#4f46e5', color: '#fff', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'default')}`} alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f1f5f9', border: '3px solid #fff', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                <button onClick={() => window.alert('Avatar upload is coming soon.')} style={{ position: 'absolute', bottom: 0, right: 0, width: '28px', height: '28px', borderRadius: '50%', background: '#4f46e5', color: '#fff', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                   <Camera size={14} />
                 </button>
               </div>
               <div>
-                <h2 style={{ fontSize: '1.5rem', color: '#1e293b', marginBottom: '0.25rem' }}>John Anderson</h2>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.75rem' }}>john.anderson@company.com</p>
+                <h2 style={{ fontSize: '1.5rem', color: '#1e293b', marginBottom: '0.25rem' }}>{user?.name || 'User'}</h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.75rem' }}>{user?.email || 'email@example.com'}</p>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.75rem', background: '#eff6ff', color: '#3b82f6', borderRadius: '20px' }}>Manager</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.75rem', background: '#eff6ff', color: '#3b82f6', borderRadius: '20px', textTransform: 'capitalize' }}>{user?.role || 'analyst'}</span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '20px' }}>Active</span>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>Last login: 2 hours ago</span>
                 </div>
               </div>
             </div>
-            <button onClick={() => notify('Profile editing enabled in demo mode.')} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff' }}>
-              <Edit2 size={16} /> Edit Profile
-            </button>
           </div>
 
-          {/* Personal Information */}
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#1e293b' }}>Personal Information</h3>
-              <button onClick={() => notify('Inline edit mode is active.')} style={{ background: 'none', border: 'none', color: '#4f46e5', fontSize: '0.9rem', fontWeight: 600, display: 'flex', gap: '0.25rem', alignItems: 'center', cursor: 'pointer' }}>
-                <Edit2 size={14} /> Edit
-              </button>
-            </div>
+            <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '1.5rem' }}>Personal Information</h3>
             
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <form onSubmit={handleProfileUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Full Name</label>
-                <input type="text" defaultValue="John Anderson" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Email Address</label>
-                  <input type="email" defaultValue="john.anderson@company.com" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                  <input type="email" value={profileData.email} disabled style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Phone Number</label>
-                  <input type="tel" defaultValue="+1 (555) 123-4567" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                  <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} placeholder="+1 (555) 000-0000" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
                 </div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Role</label>
-                  <CustomDropdown options={['Analyst', 'Manager', 'Admin']} width="100%" />
+                  <input type="text" readOnly defaultValue={user?.role || 'analyst'} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', textTransform: 'capitalize' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Department</label>
-                  <input type="text" defaultValue="Analytics & Insights" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                  <input type="text" value={profileData.department} onChange={(e) => setProfileData({...profileData, department: e.target.value})} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => notify('Profile changes saved (demo mode).')} className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Save Changes</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button type="submit" className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Save Changes</button>
               </div>
             </form>
           </div>
 
-          {/* Change Password */}
           <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', color: '#1e293b' }}>Change Password</h3>
               <Lock size={18} color="#94a3b8" />
             </div>
-            
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Current Password</label>
-                <input type="password" placeholder="Enter current password" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="password" required value={passForm.old} onChange={(e) => setPassForm({ ...passForm, old: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>New Password</label>
-                <input type="password" placeholder="Enter new password" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>Must be at least 8 characters with uppercase, lowercase, and numbers</div>
+                <input type="password" required value={passForm.new} onChange={(e) => setPassForm({ ...passForm, new: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: '#475569', fontWeight: 500, marginBottom: '0.5rem' }}>Confirm New Password</label>
-                <input type="password" placeholder="Confirm new password" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="password" required value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => notify('Password update queued (demo mode).')} className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Update Password</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button type="submit" className="btn btn-primary" style={{ background: '#4f46e5', color: '#fff' }}>Update Password</button>
               </div>
             </form>
           </div>
-          
         </div>
 
-        {/* Right Column - Side Panels */}
         <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Account Activity */}
-          <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-            <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '1.5rem' }}>Account Activity</h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <CheckCircle size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Last Login</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>2 hours ago</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>IP: 192.168.1.1</div>
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Key size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Password Changed</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>3 days ago</div>
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f5f3ff', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <User size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Profile Updated</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>1 week ago</div>
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <ShieldAlert size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Security Alert</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>2 weeks ago</div>
-                </div>
+          <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', height: '400px', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '1.5rem', flexShrink: 0 }}>Account Activity</h3>
+            <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {loading ? (
+                  <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Loading activity...</div>
+                ) : activityData.error ? (
+                  <div style={{ color: '#ef4444', fontSize: '0.8rem', background: '#fef2f2', padding: '1rem', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                    <strong>Error fetching activity:</strong><br/>
+                    {activityData.error}
+                  </div>
+                ) : activityData.needsMigration ? (
+                  <div style={{ color: '#ef4444', fontSize: '0.8rem', background: '#fef2f2', padding: '1rem', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                    <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Database Update Required</div>
+                    Please run the migration script to enable activity logging and profile updates.
+                  </div>
+                ) : activityData.items.length === 0 ? (
+                  <div style={{ color: '#64748b', fontSize: '0.9rem', textAlign: 'center', marginTop: '2rem' }}>No recent activity.</div>
+                ) : (
+                  activityData.items.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '0.75rem', paddingBottom: '0.75rem', borderBottom: idx !== activityData.items.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <CheckCircle size={14} />
+                      </div>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>{item.action}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(item.created_at).toLocaleString()}</div>
+                        {item.details?.fields && (
+                          <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+                            Updated: {item.details.fields.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-            
-            <button onClick={() => notify('Full activity feed will be available soon.')} style={{ width: '100%', marginTop: '1.5rem', padding: '0.75rem', background: 'none', border: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>View All Activity</button>
           </div>
 
-          {/* Danger Zone */}
+          <style>{`
+            .custom-scrollbar::-webkit-scrollbar {
+              width: 8px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+              background: #f1f5f9;
+              border-radius: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+              background: #cbd5e1;
+              border-radius: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: #94a3b8;
+            }
+          `}</style>
+
           <div className="card" style={{ background: '#fff', border: '1px solid #fee2e2' }}>
             <h3 style={{ fontSize: '1.1rem', color: '#dc2626', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <AlertTriangle size={18} /> Danger Zone
             </h3>
             <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: 1.5 }}>
-              Once you delete your account, there is no going back. Please be certain.
+              Once you delete your account, there is no going back.
             </p>
-            <button onClick={() => notify('Account deletion is disabled in demo mode.')} className="btn" style={{ width: '100%', background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            <button onClick={handleDeleteAccount} className="btn" style={{ width: '100%', background: '#dc2626', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
               <Trash2 size={16} /> Delete Account
             </button>
           </div>
-
         </div>
       </div>
     </DashboardLayout>
   );
 };
-
-// Required wrapper component to define missing icons
-const CheckCircle = ({ size, color }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-);
-const Lock = ({ size, color }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
 
 export default ProfileSettings;

@@ -14,6 +14,7 @@ const AuditReport = () => {
   const [loading, setLoading] = useState(true);
   
   const [docStats, setDocStats] = useState(null);
+  const [docFindings, setDocFindings] = useState([]);
   const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
@@ -40,8 +41,16 @@ const AuditReport = () => {
     const fetchDocStats = async () => {
       setLoadingStats(true);
       try {
-        const stats = await findingsAPI.stats({ document_id: selectedDoc });
-        setDocStats(stats);
+        const res = await docsAPI.findings(selectedDoc, { limit: 500 });
+        const sevMap = { low: 0, medium: 0, high: 0, critical: 0 };
+        let resolvedCount = 0;
+        res.findings.forEach((f) => {
+          if (sevMap[f.severity] !== undefined) sevMap[f.severity]++;
+          if (f.status === 'reviewed' || f.status === 'resolved') resolvedCount++;
+        });
+        const severityStats = Object.keys(sevMap).map(k => ({ severity: k, count: sevMap[k] }));
+        setDocFindings(res.findings);
+        setDocStats({ total: res.total, severityStats, resolvedCount });
       } catch (err) {
         console.error('Failed to fetch doc stats', err);
       } finally {
@@ -78,13 +87,37 @@ const AuditReport = () => {
   };
 
   const handleExportPdf = () => {
-    downloadTextFile('executive-audit-report.pdf.txt', 'Demo export: PDF content placeholder for audit report.');
+    if (!docStats || !selectedDoc) return;
+    const docName = docs.find(d => d.id === selectedDoc || d._id === selectedDoc)?.filename || 'document';
+    let content = `SENTINEL LAW - COMPLIANCE AUDIT REPORT\n`;
+    content += `======================================\n\n`;
+    content += `Document: ${docName}\n`;
+    content += `Framework: ${framework}\n`;
+    content += `Date: ${new Date().toLocaleDateString()}\n\n`;
+    content += `SUMMARY:\n`;
+    content += `-- Total Findings: ${totalFindings}\n`;
+    content += `-- Compliance Score: ${compScore}%\n`;
+    content += `-- Resolved: ${docStats.resolvedCount}\n\n`;
+    content += `DETAILED FINDINGS:\n`;
+    docFindings.forEach((f, idx) => {
+      content += `${idx + 1}. [${f.severity.toUpperCase()}] ${f.description}\n`;
+      content += `   Type: ${f.risk_type}\n`;
+      content += `   Explanation: ${f.explanation || 'N/A'}\n\n`;
+    });
+    
+    downloadTextFile(`Audit_Report_${docName.replace(/\.[^/.]+$/, "")}.txt`, content);
   };
 
   const handleExportCsv = () => {
-    if (!docStats) return;
-    const severityCsv = docStats.severityStats?.map(s => `${s.severity},${s.count}`).join('\n') || '';
-    downloadTextFile('audit-report-summary.csv', `severity,count\n${severityCsv}\n`);
+    if (!docFindings || !docFindings.length) return;
+    const docName = docs.find(d => d.id === selectedDoc || d._id === selectedDoc)?.filename || 'document';
+    let csv = `Severity,Risk Type,Description,Explanation,Confidence,Created At\n`;
+    docFindings.forEach(f => {
+      const desc = (f.description || '').replace(/"/g, '""');
+      const expl = (f.explanation || '').replace(/"/g, '""');
+      csv += `"${f.severity}","${f.risk_type}","${desc}","${expl}",${f.confidence},"${f.created_at}"\n`;
+    });
+    downloadTextFile(`Audit_Findings_${docName.replace(/\.[^/.]+$/, "")}.csv`, csv);
   };
 
   const getSeverityCount = (severity) => {
@@ -281,7 +314,7 @@ const AuditReport = () => {
                    <div style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>Compliance Score</div>
                  </div>
                  <div>
-                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>{!selectedDoc ? '-' : 0}</div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>{!selectedDoc ? '-' : (docStats?.resolvedCount || 0)}</div>
                    <div style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>Resolved Issues</div>
                  </div>
                </div>

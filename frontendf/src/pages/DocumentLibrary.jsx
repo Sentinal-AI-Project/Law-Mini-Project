@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search, Plus, FileText, FileSpreadsheet, Eye, Download, CheckCircle, Clock, X, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Search, Plus, FileText, FileSpreadsheet, Eye, Download, CheckCircle, Clock, X, AlertTriangle, ShieldCheck, Trash2 } from 'lucide-react';
 import { docsAPI } from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 import CustomDropdown from '../components/CustomDropdown';
@@ -49,6 +49,21 @@ const DocumentLibrary = () => {
   const handleView = (doc) => {
     setSelectedDoc(doc);
     setIsSidePanelOpen(true);
+  };
+
+  const handleDelete = async (docId) => {
+    if (!window.confirm('Are you sure you want to delete this document? All associated findings and reports will be permanently removed.')) {
+      return;
+    }
+    
+    try {
+      await docsAPI.delete(docId);
+      setDocuments(prev => prev.filter(d => d.id !== docId));
+      window.alert('Document deleted successfully.');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      window.alert(`Delete failed: ${err.message}`);
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -190,8 +205,9 @@ const DocumentLibrary = () => {
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: '#94a3b8' }}>
-                        <button onClick={() => handleView(doc)} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
-                        <button onClick={() => handleDownload(doc)} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Download size={18} /></button>
+                        <button onClick={() => handleView(doc)} title="View Detail" style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
+                        <button onClick={() => handleDownload(doc)} title="Download Report" style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Download size={18} /></button>
+                        <button onClick={() => handleDelete(doc.id)} title="Delete Document" style={{ background: 'none', border: 'none', padding: 0, color: '#f87171', cursor: 'pointer' }}><Trash2 size={18} /></button>
                       </div>
                     </td>
                   </tr>
@@ -277,7 +293,11 @@ const DocumentLibrary = () => {
               </div>
               <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', gap: '1rem' }}>
                  <button className="btn btn-outline" style={{ flex: 1, background: '#fff', border: '1px solid #cbd5e1', color: '#475569', fontWeight: 600, padding: '0.6rem', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsSidePanelOpen(false)}>Close panel</button>
-                 <button className="btn btn-primary" style={{ flex: 1, background: '#2563eb', color: '#fff', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center', padding: '0.6rem', borderRadius: '6px', cursor: 'pointer', border: 'none' }}>
+                 <button 
+                    className="btn btn-primary" 
+                    onClick={() => navigate(`/findings?document_id=${selectedDoc.id}`)}
+                    style={{ flex: 1, background: '#2563eb', color: '#fff', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center', padding: '0.6rem', borderRadius: '6px', cursor: 'pointer', border: 'none' }}
+                  >
                     <ShieldCheck size={18} /> Resolve Risks
                  </button>
               </div>

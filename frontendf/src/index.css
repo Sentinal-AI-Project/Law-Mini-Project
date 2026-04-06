@@ -41,17 +41,19 @@ a {
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-main);
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-card);
+  background: var(--accent-blue);
+  border: 3px solid var(--bg-main);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-color);
+  background: var(--accent-teal);
 }
 
 /* Glassmorphism */
@@ -86,6 +88,7 @@ h1, h2, h3, h4, h5, h6 {
 .gradient-text {
   background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Info, UploadCloud, FileText, CheckCircle2, AlertTriangle, AlertCircle, Play, X } from 'lucide-react';
 import { docsAPI } from '../services/api';
@@ -29,7 +29,35 @@ const UploadDocuments = () => {
     const selected = Array.from(e.target.files || []);
     if (!selected.length) return;
 
-    const newEntries = selected.map((f) => ({ 
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = [
+      'application/pdf', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+      'application/msword', 
+      'text/plain', 
+      'text/csv'
+    ];
+
+    const validFiles = [];
+    const errors = [];
+
+    selected.forEach(f => {
+      if (f.size > MAX_SIZE) {
+        errors.push(`${f.name}: File is too large (max 10MB)`);
+      } else if (!ALLOWED_TYPES.includes(f.type) && !f.name.match(/\.(pdf|docx|doc|txt|csv)$/i)) {
+        errors.push(`${f.name}: Unsupported file type`);
+      } else {
+        validFiles.push(f);
+      }
+    });
+
+    if (errors.length) {
+      window.alert(errors.join('\n'));
+    }
+
+    if (!validFiles.length) return;
+
+    const newEntries = validFiles.map((f) => ({ 
       file: f, 
       status: 'uploading', 
       docId: null, 
@@ -41,18 +69,27 @@ const UploadDocuments = () => {
     }));
     setFiles((prev) => [...newEntries, ...prev]);
 
-    for (let i = 0; i < selected.length; i++) {
-      const file = selected[i];
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      const fileName = `${Date.now()}-${file.name}`;
+      
       try {
-        const data = await docsAPI.upload(file, framework || 'contract');
+        const docTypeMapping = framework && ['SOC 2', 'GDPR', 'HIPAA', 'ISO 27001'].includes(framework) ? 'policy' : 'contract';
+        const frameworksArr = [framework].filter(f => f && f !== 'Select Framework');
+
+        // Upload and register via the Backend securely
+        const data = await docsAPI.upload(file, docTypeMapping, frameworksArr);
+
         setFiles((prev) =>
           prev.map((entry) =>
             entry.file === file ? { ...entry, status: 'uploaded', docId: data.docId, progress: 100 } : entry
           )
         );
-        // refresh history
+        
+        // Refresh local history
         const res = await docsAPI.list({ limit: 4 });
         if (res.documents) setHistoryDocs(res.documents);
+
       } catch (err) {
         setFiles((prev) =>
           prev.map((entry) =>
@@ -61,7 +98,9 @@ const UploadDocuments = () => {
         );
       }
     }
+
   };
+
 
   const handleRunAnalysis = async () => {
     const uploadedDocs = files.filter((f) => f.status === 'uploaded' && f.docId);
@@ -226,11 +265,17 @@ const UploadDocuments = () => {
                     </span>
                   </div>
                   <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>Uploaded {new Date(doc.uploaded_at || doc.created_at).toLocaleDateString()}</div>
-                  {doc.status === 'analyzing' && (
+                  {doc.status === 'uploading' && (
                     <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
-                      <div style={{ width: '40%', height: '100%', background: '#2563eb' }}></div>
+                      <div style={{ width: '60%', height: '100%', background: '#2563eb' }}></div>
                     </div>
                   )}
+                  {(doc.status === 'analyzing' || doc.status === 'pending') && (
+                    <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                      <div style={{ width: '85%', height: '100%', background: '#f59e0b', animation: 'pulse 2s infinite' }}></div>
+                    </div>
+                  )}
+
                   {doc.status === 'failed' && (
                     <>
                       <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: '1rem' }}>Failed to process</div>

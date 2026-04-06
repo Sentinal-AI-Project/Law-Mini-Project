@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search, AlertTriangle, MessageSquare, Check, ExternalLink } from 'lucide-react';
-import { findingsAPI } from '../services/api';
+import { Search, AlertTriangle, MessageSquare, Check, ExternalLink, DownloadCloud, X } from 'lucide-react';
+import { findingsAPI, docsAPI } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const severityColor = (s) => {
   const lowS = (s || 'low').toLowerCase();
@@ -19,16 +21,37 @@ const Findings = () => {
   const [selectedFindingId, setSelectedFindingId] = useState(null);
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState('');
-  const [reviewedIds, setReviewedIds] = useState([]);
+
+  const [searchParams] = useSearchParams();
+  const [docs, setDocs] = useState([]);
+  const [selectedDocId, setSelectedDocId] = useState(searchParams.get('document_id') || 'All');
+
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        const dData = await docsAPI.list({ limit: 50 });
+        setDocs(dData.documents || []);
+      } catch (err) {
+        console.error('Failed to fetch docs', err);
+      }
+    };
+    initData();
+  }, []);
 
   useEffect(() => {
     const fetchFindings = async () => {
+      setLoading(true);
       try {
-        const data = await findingsAPI.list();
+        const params = { min_confidence: 0.1 };
+        if (selectedDocId !== 'All') params.document_id = selectedDocId;
+        
+        const data = await findingsAPI.list(params);
         const results = data.findings || [];
         setFindings(results);
         if (results.length > 0) {
           setSelectedFindingId(results[0]._id);
+        } else {
+          setSelectedFindingId(null);
         }
       } catch (err) {
         setError(err.message);
@@ -37,21 +60,65 @@ const Findings = () => {
       }
     };
     fetchFindings();
-  }, []);
+  }, [selectedDocId]);
 
   const activeFinding = findings.find(f => f._id === selectedFindingId) || null;
 
-  const handleToggleReview = () => {
+  const handleToggleReview = async () => {
     if (!selectedFindingId) return;
-    setReviewedIds(prev => prev.includes(selectedFindingId) ? prev.filter(id => id !== selectedFindingId) : [...prev, selectedFindingId]);
+    const isReviewed = activeFinding.status === 'reviewed';
+    const newStatus = isReviewed ? 'pending' : 'reviewed';
+    
+    setFindings(prev => prev.map(f => f._id === selectedFindingId ? { ...f, status: newStatus } : f));
+    
+    try {
+      await findingsAPI.update(selectedFindingId, { status: newStatus });
+    } catch (err) {
+      setFindings(prev => prev.map(f => f._id === selectedFindingId ? { ...f, status: isReviewed ? 'reviewed' : 'pending' } : f));
+      console.error('Failed to update status', err);
+    }
   };
 
-  const handleAddNote = () => {
-    if (!noteText.trim() || !selectedFindingId) return;
-    // In a real app we'd call an API here
-    window.alert('Note saved in demo mode.');
-    setNoteText('');
+  const handleShowNoteModal = () => {
+    setNoteText(activeFinding?.notes || '');
+    setShowNoteInput(true);
+  };
+
+  const handleAddNote = async () => {
+    if (!selectedFindingId) return;
+    const currentNote = noteText.trim();
+    
+    setFindings(prev => prev.map(f => f._id === selectedFindingId ? { ...f, notes: currentNote } : f));
     setShowNoteInput(false);
+    setNoteText('');
+    
+    try {
+      await findingsAPI.update(selectedFindingId, { notes: currentNote });
+    } catch (err) {
+      console.error('Failed to persist note', err);
+      // alert could be too intrusive but we want them to know
+      // window.alert('Note saved locally but failed to reach database. Please check your connection.');
+    }
+  };
+
+  const handleExportCsv = () => {
+    if (!findings.length) return;
+    const headers = 'ID,Severity,Description,Explanation,Type,Confidence,Notes,Status,Created At\n';
+    const csvContent = findings.map(f => {
+      const desc = (f.description || '').replace(/"/g, '""');
+      const expl = (f.explanation || '').replace(/"/g, '""');
+      const notes = (f.notes || '').replace(/"/g, '""');
+      return `"${f._id}","${f.severity}","${desc}","${expl}","${f.risk_type}",${f.confidence},"${notes}","${f.status}","${f.created_at}"`;
+    }).join('\n');
+    
+    const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'compliance_findings_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const filteredFindings = findings.filter(f => {
@@ -66,6 +133,12 @@ const Findings = () => {
       <div style={{ display: 'flex', gap: '2rem', height: 'calc(100vh - 120px)' }}>
         {/* Left Side - Findings List */}
         <div style={{ width: '400px', display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <h3 style={{ fontSize: '1.1rem', color: '#1e293b', fontWeight: 600 }}>Findings</h3>
+             <button onClick={handleExportCsv} style={{ background: '#f1f5f9', border: 'none', padding: '0.4rem 0.6rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#475569', fontSize: '0.8rem' }}>
+                <DownloadCloud size={14} /> Export
+             </button>
+          </div>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ position: 'relative', marginBottom: '1rem' }}>
               <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -74,9 +147,23 @@ const Findings = () => {
                 placeholder="Search findings..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} 
+                style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem' }} 
               />
             </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <select
+                value={selectedDocId}
+                onChange={(e) => setSelectedDocId(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.85rem', color: '#1e293b' }}
+              >
+                <option value="All">All Documents</option>
+                {docs.map(doc => (
+                  <option key={doc._id} value={doc._id}>{doc.filename}</option>
+                ))}
+              </select>
+            </div>
+
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {['High', 'Medium', 'Low'].map(risk => {
                 const isActive = activeRisk === risk;
@@ -104,7 +191,7 @@ const Findings = () => {
             </div>
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="custom-scrollbar scroll-container" style={{ flex: 1, overflowY: 'auto' }}>
             {loading ? (
               <p style={{ padding: '1.5rem', color: '#94a3b8' }}>Loading findings…</p>
             ) : error ? (
@@ -130,9 +217,12 @@ const Findings = () => {
                       <span style={{ color: '#64748b' }}>{finding.confidence != null ? (finding.confidence * 100).toFixed(0) + '%' : '—'}</span>
                     </div>
                     <h4 style={{ color: '#1e293b', marginBottom: '0.25rem', fontSize: '1rem' }}>{finding.description || 'Finding'}</h4>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                      <span style={{ color: '#3b82f6', fontWeight: 500 }}>{finding.policy_ref_id?.framework || '—'}</span>
-                      <span style={{ color: '#94a3b8' }}>{finding.created_at ? new Date(finding.created_at).toLocaleDateString() : '—'}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', overflow: 'hidden' }}>
+                        <span style={{ color: '#3b82f6', fontWeight: 600, flexShrink: 0 }}>{finding.policy_ref_id?.framework || '—'}</span>
+                        <span style={{ color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• {finding.document_id?.filename || 'Unknown Doc'}</span>
+                      </div>
+                      <span style={{ color: '#94a3b8', flexShrink: 0 }}>{finding.created_at ? new Date(finding.created_at).toLocaleDateString() : '—'}</span>
                     </div>
                   </div>
                 );
@@ -144,7 +234,7 @@ const Findings = () => {
         </div>
 
         {/* Right Side - Finding Details */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', overflowY: 'auto' }}>
+        <div className="custom-scrollbar scroll-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', overflowY: 'auto' }}>
           {!activeFinding ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: '#94a3b8' }}>
               Select a finding to view details.
@@ -156,7 +246,7 @@ const Findings = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '1rem' }}>
                     <span style={{ color: severityColor(activeFinding.severity).text, fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>{activeFinding.severity}</span>
                     <span style={{ color: '#475569', fontSize: '0.9rem' }}>Confidence: <span style={{ fontWeight: 700 }}>{activeFinding.confidence != null ? (activeFinding.confidence * 100).toFixed(0) : '—'}%</span></span>
-                    {reviewedIds.includes(activeFinding._id) && (
+                    {activeFinding.status === 'reviewed' && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: '#ecfdf5', color: '#059669', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>
                         <Check size={14} /> Reviewed
                       </span>
@@ -167,19 +257,19 @@ const Findings = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <button 
-                    onClick={() => setShowNoteInput(!showNoteInput)} 
+                    onClick={handleShowNoteModal} 
                     className="btn btn-outline" 
                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', background: '#f1f5f9', border: 'none', cursor: 'pointer' }}
                   >
-                    <MessageSquare size={18} /> Add Note
+                    <MessageSquare size={18} /> {activeFinding.notes ? 'Edit Note' : 'Add Note'}
                   </button>
                   <button 
                     onClick={handleToggleReview} 
                     className="btn btn-primary" 
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: reviewedIds.includes(activeFinding._id) ? '#10b981' : '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: activeFinding.status === 'reviewed' ? '#10b981' : '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
                   >
                     <Check size={18} /> 
-                    {reviewedIds.includes(activeFinding._id) ? 'Reviewed' : 'Mark as Reviewed'}
+                    {activeFinding.status === 'reviewed' ? 'Reviewed' : 'Mark as Reviewed'}
                   </button>
                 </div>
               </div>
@@ -210,20 +300,62 @@ const Findings = () => {
                 </div>
               </div>
 
-              {showNoteInput && (
-                <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                  <textarea 
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Enter your investigation notes or remediation details here..."
-                    style={{ width: '100%', height: '100px', padding: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '1rem', resize: 'vertical' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                    <button onClick={() => setShowNoteInput(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
-                    <button onClick={handleAddNote} style={{ padding: '0.5rem 1rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}>Save Note</button>
-                  </div>
+              {activeFinding.notes && !showNoteInput && (
+                <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f1f5f9', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                  <h4 style={{ color: '#1e293b', marginBottom: '0.5rem', fontSize: '1rem' }}>Investigation Note</h4>
+                  <p style={{ color: '#475569', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>{activeFinding.notes}</p>
                 </div>
               )}
+
+              <AnimatePresence>
+                {showNoteInput && (
+                  <>
+                    <motion.div 
+                      key="overlay"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      exit={{ opacity: 0 }}
+                      style={{ position: 'fixed', inset: 0, background: '#0f172a', zIndex: 1000 }}
+                      onClick={() => setShowNoteInput(false)}
+                    />
+                    <motion.div 
+                      key="modal"
+                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                      style={{ 
+                        position: 'fixed', 
+                        top: '50%', 
+                        left: '50%', 
+                        transform: 'translate(-50%, -50%)', 
+                        width: '500px', 
+                        background: '#fff', 
+                        borderRadius: '12px', 
+                        padding: '2rem', 
+                        zIndex: 1001,
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: 600 }}>Investigation Note</h3>
+                        <button onClick={() => setShowNoteInput(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}><X size={20} color="#64748b" /></button>
+                      </div>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Enter internal notes, remediation steps, or evidence for this finding.</p>
+                      <textarea 
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Type your notes here..."
+                        autoFocus
+                        style={{ width: '100%', height: '150px', padding: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '1.5rem', resize: 'none', fontSize: '0.95rem' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <button onClick={() => setShowNoteInput(false)} style={{ padding: '0.6rem 1.25rem', background: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, color: '#475569' }}>Cancel</button>
+                        <button onClick={handleAddNote} style={{ padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Save Note</button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
 
               {activeFinding.policy_ref_id && (
                 <div>
@@ -246,6 +378,30 @@ const Findings = () => {
           )}
         </div>
       </div>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #94a3b8;
+          border-radius: 4px;
+          border: 2px solid #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+        
+        /* Ensure parents use the class */
+        .scroll-container {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #f1f5f9;
+        }
+      `}</style>
     </DashboardLayout>
   );
 };

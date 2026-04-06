@@ -53,6 +53,22 @@ exports.register = async (req, res) => {
             throw insertError;
         }
 
+        // 2. Automatically initialize public.profiles (Profile Sync)
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+                id: user.id,
+                full_name: name,
+                email: normalizedEmail,
+                avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+            });
+
+        if (profileError) {
+            console.warn('Profile initialization failed, but user was created:', profileError);
+            // We don't throw here to avoid blocking registration if profiles table is missing/restricted
+        }
+
+
         const token = jwt.sign(
             { id: user.id, role: user.role },
             process.env.JWT_SECRET,
@@ -141,5 +157,78 @@ exports.getMe = async (req, res) => {
         res.json({ user: normalizeUser(user) });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch profile', error: err.message });
+    }
+};
+/**
+ * POST /api/auth/change-password
+ * Change current user's password
+ */
+exports.changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ message: 'Current and new passwords are required' });
+        }
+
+        // Fetch current user with password hash
+        const { data: user, error: findError } = await supabase
+            .from('users')
+            .select('id, password_hash')
+            .eq('id', req.user.id)
+            .maybeSingle();
+
+        if (findError) throw findError;
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Verify old password
+        const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Incorrect current password' });
+        }
+
+        // Hash and update new password
+        const newHash = await bcrypt.hash(newPassword, 10);
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ password_hash: newHash })
+            .eq('id', req.user.id);
+
+        if (updateError) throw updateError;
+
+        // Log password change activity
+        const userController = require('./user.controller');
+        await userController.logActivity(req.user.id, 'Password Changed');
+
+        res.json({ message: 'Password updated successfully' });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to change password', error: err.message });
+    }
+};
+
+/**
+ * DELETE /api/auth/account
+ * Delete current user's account
+ */
+exports.deleteAccount = async (req, res) => {
+    try {
+        // In a real app, we might want to delete related documents first
+        // But here we'll assume foreign key cascades or simple deletion
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', req.user.id);
+
+        if (error) throw error;
+
+        // Log account deletion activity (internal/audit context before session ends)
+        const userController = require('./user.controller');
+        await userController.logActivity(req.user.id, 'Account Deleted');
+
+        res.json({ message: 'Account deleted successfully' });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to delete account', error: err.message });
     }
 };

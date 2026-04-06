@@ -3,13 +3,13 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ShieldAlert, AlertTriangle, FileText, CheckCircle2, ArrowRight, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { findingsAPI, reportsAPI, docsAPI } from '../services/api';
+import { useComplianceData } from '../hooks/useComplianceData';
 
 const RiskDashboard = () => {
   const navigate = useNavigate();
 
-  const [stats, setStats] = useState({
-    criticalCount: 0,
-    highCount: 0,
+  const { stats: complianceStats, loading: complianceLoading } = useComplianceData(30000);
+  const [miscStats, setMiscStats] = useState({
     reportsCount: 0,
     completedAnalysisCount: 0,
   });
@@ -20,28 +20,16 @@ const RiskDashboard = () => {
     const loadData = async () => {
       try {
         const [
-          findingStats,
           reportsData,
           completedDocs,
           recentFindings
         ] = await Promise.allSettled([
-          findingsAPI.stats(),
           reportsAPI.list({ limit: 1 }),
-          docsAPI.list({ status: 'analyzed', limit: 1 }), // Or 'completed'
+          docsAPI.list({ status: 'completed', limit: 1 }),
           findingsAPI.list({ limit: 3 })
         ]);
 
-        let critical = 0;
-        let high = 0;
-        
-        if (findingStats.status === 'fulfilled' && findingStats.value.by_severity) {
-           critical = findingStats.value.by_severity.find(s => s._id === 'critical')?.count || 0;
-           high = findingStats.value.by_severity.find(s => s._id === 'high')?.count || 0;
-        }
-
-        setStats({
-          criticalCount: critical,
-          highCount: high,
+        setMiscStats({
           reportsCount: reportsData.status === 'fulfilled' ? (reportsData.value.total || 0) : 0,
           completedAnalysisCount: completedDocs.status === 'fulfilled' ? (completedDocs.value.total || 0) : 0,
         });
@@ -57,6 +45,9 @@ const RiskDashboard = () => {
     };
     loadData();
   }, []);
+
+  const criticalCount = complianceStats?.findings?.by_severity?.find(s => s._id === 'critical')?.count || 0;
+  const highCount = complianceStats?.findings?.by_severity?.find(s => s._id === 'high')?.count || 0;
 
   return (
     <DashboardLayout>
@@ -75,7 +66,7 @@ const RiskDashboard = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626' }}>CRITICAL</span>
           </div>
           <div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : stats.criticalCount}</div>
+              <p style={{ fontSize: '2rem', fontWeight: 800, color: '#dc2626', marginBottom: '0.25rem' }}>{complianceLoading ? '—' : criticalCount}</p>
             <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Critical Risks</div>
           </div>
         </div>
@@ -88,7 +79,7 @@ const RiskDashboard = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#d97706' }}>HIGH</span>
           </div>
           <div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : stats.highCount}</div>
+              <p style={{ fontSize: '2rem', fontWeight: 800, color: '#d97706', marginBottom: '0.25rem' }}>{complianceLoading ? '—' : highCount}</p>
             <div style={{ color: '#64748b', fontSize: '0.9rem' }}>High Priority</div>
           </div>
         </div>
@@ -101,7 +92,7 @@ const RiskDashboard = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563eb' }}>ACTIVE</span>
           </div>
           <div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : stats.reportsCount}</div>
+              <p style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>{loading ? '—' : miscStats.reportsCount}</p>
             <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Reports Generated</div>
           </div>
         </div>
@@ -114,7 +105,7 @@ const RiskDashboard = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981' }}>DONE</span>
           </div>
           <div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>{loading ? '—' : stats.completedAnalysisCount}</div>
+              <p style={{ fontSize: '2rem', fontWeight: 800, color: '#10b981', marginBottom: '0.25rem' }}>{loading ? '—' : miscStats.completedAnalysisCount}</p>
             <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Completed Analysis</div>
           </div>
         </div>

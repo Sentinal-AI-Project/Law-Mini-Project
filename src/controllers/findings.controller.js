@@ -36,8 +36,11 @@ const attachEntityMaps = async (findings) => {
         severity: row.severity,
         confidence: row.confidence,
         description: row.description,
+        explanation: row.explanation,
         evidence_snippet: row.evidence_snippet,
         policy_ref_id: policyMap.get(row.policy_ref_id) || row.policy_ref_id,
+        notes: row.notes,
+        status: row.status,
         created_at: row.created_at,
     }));
 };
@@ -50,12 +53,12 @@ exports.listFindings = async (req, res) => {
     try {
         const limit = Number(req.query.limit || 20);
         const offset = Number(req.query.offset || 0);
-        const minConfidence = Number(req.query.min_confidence || 0.7);
+        const minConfidence = Number(req.query.min_confidence || 0.1);
         const { severity, risk_type, document_id } = req.query;
 
         let query = supabase
             .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at', { count: 'exact' })
+            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at, notes, status', { count: 'exact' })
             .gte('confidence', minConfidence);
 
         if (severity) query = query.eq('severity', severity);
@@ -67,6 +70,7 @@ exports.listFindings = async (req, res) => {
             .range(offset, offset + limit - 1);
 
         if (error) {
+            console.error('Supabase Query Error:', { error, query: 'listFindings' });
             throw error;
         }
 
@@ -94,7 +98,7 @@ exports.getFinding = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at')
+            .select('id, document_id, clause_id, risk_type, severity, confidence, description, explanation, evidence_snippet, policy_ref_id, created_at, notes, status')
             .eq('id', req.params.id)
             .maybeSingle();
 
@@ -155,5 +159,45 @@ exports.getStats = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch stats', error: err.message });
+    }
+};
+
+/**
+ * PATCH /api/findings/:id
+ * Update finding (e.g. status, notes)
+ */
+exports.updateFinding = async (req, res) => {
+    try {
+        const { status, notes } = req.body;
+        const updates = {};
+        if (status !== undefined) updates.status = status;
+        if (notes !== undefined) updates.notes = notes;
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ message: 'No fields to update' });
+        }
+        
+        console.log(`Updating finding ${req.params.id} with`, updates);
+
+        const { data, error } = await supabase
+            .from('findings')
+            .update(updates)
+            .eq('id', req.params.id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase Update Error Body:', error);
+            throw error;
+        }
+        
+        res.json({ finding: { ...data, _id: data.id } });
+    } catch (err) {
+        console.error('Update finding error:', err);
+        const isColumnError = err.message?.includes('column') && err.message?.includes('does not exist');
+        const message = isColumnError 
+            ? 'Database schema out of sync. Please run the SQL migration: ALTER TABLE public.findings ADD COLUMN notes TEXT, ADD COLUMN status TEXT DEFAULT \'pending\';'
+            : 'Failed to update finding';
+        res.status(500).json({ message, error: err.message });
     }
 };

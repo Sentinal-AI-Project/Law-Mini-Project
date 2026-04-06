@@ -72,21 +72,58 @@ exports.upload = async (req, res) => {
         const sourceUrl = urlData.publicUrl;
 
         // Save metadata to DB
+        const payload = {
+            filename: req.file.originalname,
+            doc_type: req.body.doc_type || 'contract',
+            upload_user_id: req.user.id,
+            source_url: sourceUrl,
+            status: 'pending',
+        };
+
+        // Defensive check for 'frameworks' column (will skip if migration hasn't run)
+        if (req.body.frameworks) {
+            try {
+                payload.frameworks = typeof req.body.frameworks === 'string' 
+                    ? JSON.parse(req.body.frameworks) 
+                    : req.body.frameworks;
+            } catch (e) {
+                console.warn('Malformed frameworks JSON, defaulting to empty array');
+                payload.frameworks = [];
+            }
+        }
+
         const { data: doc, error } = await supabase
             .from('documents')
-            .insert({
-                filename: req.file.originalname,
-                doc_type: req.body.doc_type || 'contract',
-                upload_user_id: req.user.id,
-                source_url: sourceUrl,
-                status: 'pending',
-            })
+            .insert(payload)
             .select('id, filename, status, uploaded_at')
             .single();
 
         if (error) {
+            // Fallback for missing frameworks column if insert fails
+            if (error.message?.includes('column "frameworks"')) {
+                delete payload.frameworks;
+                const { data: retryDoc, error: retryError } = await supabase
+                    .from('documents')
+                    .insert(payload)
+                    .select('id, filename, status, uploaded_at')
+                    .single();
+                if (retryError) throw retryError;
+
+                const userController = require('./user.controller');
+                await userController.logActivity(req.user.id, 'Document Uploaded', { filename: retryDoc.filename });
+                nlpService.analyze({ ...retryDoc, source_url: sourceUrl }, []);
+
+                return res.status(201).json({ docId: retryDoc.id, filename: retryDoc.filename, status: retryDoc.status });
+            }
             throw error;
         }
+
+        // Log upload activity
+        const userController = require('./user.controller');
+        await userController.logActivity(req.user.id, 'Document Uploaded', { filename: doc.filename });
+
+        // Trigger analysis automatically
+        nlpService.analyze({ ...doc, source_url: sourceUrl }, payload.frameworks);
 
         res.status(201).json({
             docId: doc.id,
@@ -96,9 +133,72 @@ exports.upload = async (req, res) => {
         });
     } catch (err) {
         console.error('Upload Error:', err);
-        res.status(500).json({ message: 'Upload failed', error: err.message });
+        res.status(500).json({ 
+            message: 'Upload failed', 
+            error: err.message,
+            stack: err.stack,
+            details: err.details 
+        });
     }
 };
+
+/**
+ * POST /api/docs/upload-metadata
+ * Register a document uploaded directly to Supabase Storage by the frontend
+ */
+exports.uploadMetadata = async (req, res) => {
+    try {
+        const { filename, doc_type, source_url, frameworks } = req.body;
+
+        if (!filename || !source_url) {
+            return res.status(400).json({ message: 'Missing required metadata (filename, source_url)' });
+        }
+
+        const payload = {
+            filename,
+            doc_type: doc_type || 'contract',
+            upload_user_id: req.user.id,
+            source_url,
+            status: 'pending',
+            frameworks: Array.isArray(frameworks) ? frameworks : []
+        };
+
+        const { data: doc, error } = await supabase
+            .from('documents')
+            .insert(payload)
+            .select('id, filename, status, uploaded_at')
+            .single();
+
+        if (error) {
+            console.error('DB Insert Error:', error);
+            throw error;
+        }
+
+        // Log upload activity
+        const userController = require('./user.controller');
+        await userController.logActivity(req.user.id, 'Document Uploaded (Serverless)', { filename: doc.filename });
+
+        // Trigger analysis automatically (Serverless Automation)
+        nlpService.analyze({ ...doc, source_url: payload.source_url }, payload.frameworks);
+
+        res.status(201).json({
+            docId: doc.id,
+            filename: doc.filename,
+            status: doc.status,
+            uploaded_at: doc.uploaded_at,
+        });
+    } catch (err) {
+        console.error('Metadata Upload Error:', err);
+        res.status(500).json({ 
+            message: 'Metadata registration failed', 
+            error: err.message,
+            details: err.details 
+        });
+    }
+};
+
+
+
 
 /**
  * POST /api/docs/:id/analyze
@@ -133,7 +233,7 @@ exports.analyze = async (req, res) => {
             throw updateError;
         }
 
-        nlpService.analyze({ ...doc, _id: doc.id });
+        nlpService.analyze({ ...doc, _id: doc.id }, doc.frameworks);
 
         res.status(202).json({
             analysisId: doc.id,
@@ -158,7 +258,7 @@ exports.getFindings = async (req, res) => {
 
         let query = supabase
             .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at', { count: 'exact' })
+            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at, notes, status', { count: 'exact' })
             .eq('document_id', req.params.id)
             .gte('confidence', minConfidence);
 
@@ -290,5 +390,68 @@ exports.getDocument = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch document', error: err.message });
+    }
+};
+/**
+ * DELETE /api/docs/:id
+ * Delete a document and its associated findings/reports
+ */
+exports.deleteDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Get document to check ownership and get storage path
+        const { data: doc, error: docError } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (docError) throw docError;
+        if (!doc) return res.status(404).json({ message: 'Document not found' });
+
+        // Security check: must be the uploader or an admin (if roles added)
+        if (doc.upload_user_id !== req.user.id) {
+            return res.status(403).json({ message: 'You do not have permission to delete this document' });
+        }
+
+        // 2. Delete associated findings
+        await supabase.from('findings').delete().eq('document_id', id);
+
+        // 3. Delete associated reports
+        await supabase.from('reports').delete().eq('document_id', id);
+
+        // 4. Delete the document entry
+        const { error: deleteError } = await supabase
+            .from('documents')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) throw deleteError;
+
+        // 5. Delete from Supabase storage if we have a path
+        if (doc.source_url) {
+            try {
+                // Extract path from public URL if possible (or we could store path in DB)
+                // For now, we'll try to extract it. URL format is usually .../storage/v1/object/public/documents/PATH
+                const urlParts = doc.source_url.split('/documents/');
+                if (urlParts.length > 1) {
+                    const storagePath = decodeURIComponent(urlParts[1]);
+                    await supabase.storage.from('documents').remove([storagePath]);
+                }
+            } catch (storageErr) {
+                console.warn('Failed to delete file from storage:', storageErr.message);
+                // We don't fail the whole request if storage delete fails
+            }
+        }
+
+        // 6. Log activity
+        const userController = require('./user.controller');
+        await userController.logActivity(req.user.id, 'Document Deleted', { filename: doc.filename });
+
+        res.json({ message: 'Document and all associated data deleted successfully' });
+    } catch (err) {
+        console.error('Delete Document Error:', err);
+        res.status(500).json({ message: 'Failed to delete document', error: err.message });
     }
 };

@@ -49,11 +49,11 @@ def get_overlap(clause, rule):
 def load_cuad_rules(cuad_path="CUAD_v1.json"):
 
     if os.path.exists("cuad_rules_cache.json"):
-        print("⚡ Loading cached CUAD rules...")
+        print("[*] Loading cached CUAD rules...")
         with open("cuad_rules_cache.json", "r") as f:
             return json.load(f)
 
-    print("⏳ Processing CUAD (first time only)...")
+    print("[...] Processing CUAD (first time only)...")
 
     with open(cuad_path, "r") as f:
         data = json.load(f)
@@ -87,7 +87,7 @@ def load_cuad_rules(cuad_path="CUAD_v1.json"):
     with open("cuad_rules_cache.json", "w") as f:
         json.dump(rules, f)
 
-    print("✅ Total CUAD rules loaded:", len(rules))
+    print("[OK] Total CUAD rules loaded:", len(rules))
     return rules
 
 
@@ -97,10 +97,10 @@ def load_cuad_rules(cuad_path="CUAD_v1.json"):
 def get_rule_embeddings(all_rules):
 
     if os.path.exists("rule_embeddings.pt") and os.path.exists("cuad_rules_cache.json"):
-        print("⚡ Loading cached embeddings...")
+        print("[*] Loading cached embeddings...")
         return torch.load("rule_embeddings.pt")
 
-    print("⏳ Computing embeddings (one-time)...")
+    print("[...] Computing embeddings (one-time)...")
 
     rule_texts = [r["description"] for r in all_rules]
     embeddings = model.encode(rule_texts, convert_to_tensor=True)
@@ -165,14 +165,14 @@ def run_audit(contract_path, policy_path=None):
 
     all_rules = cuad_rules + custom_rules
 
-    print("✅ Total rules used:", len(all_rules))
+    print("[OK] Total rules used:", len(all_rules))
 
     rule_embeddings = get_rule_embeddings(all_rules)
 
     contract_text = extract_text_from_pdf(contract_path)
     clauses = segment_clauses(contract_text)
 
-    print("✅ Total clauses found:", len(clauses))
+    print("[OK] Total clauses found:", len(clauses))
 
     results = []
 

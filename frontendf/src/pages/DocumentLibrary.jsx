@@ -96,12 +96,12 @@ const DocumentLibrary = () => {
         </button>
       </div>
 
-      <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+      <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 2fr) 1fr', gap: '1.5rem' }}>
           <div>
-             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Search Documents</label>
+             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Search Documents</label>
              <div style={{ position: 'relative' }}>
-               <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+               <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                <input 
                  type="text" 
                  placeholder="Search by document name..." 
@@ -112,7 +112,7 @@ const DocumentLibrary = () => {
              </div>
           </div>
           <div>
-             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Risk Level</label>
+             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Risk Level</label>
              <CustomDropdown 
                options={['All Levels', 'Critical', 'High', 'Medium', 'Low']} 
                onChange={(val) => setRiskFilter(val)} 
@@ -122,18 +122,18 @@ const DocumentLibrary = () => {
         </div>
       </div>
 
-      <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: 0, overflow: 'hidden' }}>
+      <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
-          <h2 style={{ fontSize: '1.25rem', color: '#1e293b' }}>Documents <span style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 'normal' }}>({filteredDocuments.length} total)</span></h2>
+          <h2 style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Documents <span style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 'normal' }}>({filteredDocuments.length} total)</span></h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Show:</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Show:</span>
             <CustomDropdown options={['25', '50']} width="80px" />
           </div>
         </div>
         
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.85rem' }}>
+            <tr style={{ borderBottom: '1px solid #e2e8f0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Document Name</th>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Type</th>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Uploaded By</th>
@@ -146,48 +146,48 @@ const DocumentLibrary = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading documents…</td></tr>
+              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading documents…</td></tr>
             ) : error ? (
-              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#dc2626' }}>{error}</td></tr>
+              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--accent-red)' }}>{error}</td></tr>
             ) : filteredDocuments.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                  No documents found. <Link to="/upload" style={{ color: '#2563eb' }}>Upload your first document.</Link>
+                <td colSpan="8" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No documents found. <Link to="/upload" style={{ color: 'var(--accent-blue)' }}>Upload your first document.</Link>
                 </td>
               </tr>
             ) : (
               filteredDocuments.map((doc, idx) => {
                 const ext = doc.filename?.split('.').pop()?.toUpperCase() || 'PDF';
                 return (
-                  <tr key={doc._id || idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#1e293b' }}>
+                  <tr key={doc._id || idx} style={{ borderBottom: '1px solid #e2e8f0', color: 'var(--text-main)' }}>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {ext === 'XLSX' ? <FileSpreadsheet color="#10b981" /> : <FileText color="#ef4444" />}
                         <div>
                           <div style={{ fontWeight: 500 }}>{doc.filename}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{(doc.size / 1024).toFixed(1)} KB</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{(doc.size / 1024).toFixed(1)} KB</div>
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
-                      <span style={{ padding: '0.25rem 0.5rem', background: '#f1f5f9', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>{ext}</span>
+                      <span style={{ padding: '0.25rem 0.5rem', background: 'var(--bg-card-hover)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{ext}</span>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=User`} alt="User" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f1f5f9' }} />
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=User`} alt="User" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-card-hover)' }} />
                         <span style={{ fontSize: '0.9rem' }}>System User</span>
                       </div>
                     </td>
-                    <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: '#475569' }}>
+                    <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                       {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : '—'}
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
                       {doc.status === 'analyzed' ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#ecfdf5', color: '#059669', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: 'rgba(11, 220, 181, 0.1)', color: 'var(--accent-teal)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
                           <CheckCircle size={14} /> Completed
                         </span>
                       ) : (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#fef3c7', color: '#d97706', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent-orange)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 500 }}>
                           <Clock size={14} /> {doc.status || 'Processing'}
                         </span>
                       )}
@@ -199,12 +199,12 @@ const DocumentLibrary = () => {
                         borderRadius: '20px', 
                         fontSize: '0.8rem', 
                         fontWeight: 600,
-                        background: '#f1f5f9',
-                        color: '#64748b'
+                        background: 'var(--bg-card-hover)',
+                        color: 'var(--text-muted)'
                       }}>{doc.risk_level || 'Low'}</span>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: '#94a3b8' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', color: 'var(--text-muted)' }}>
                         <button onClick={() => handleView(doc)} title="View Detail" style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Eye size={18} /></button>
                         <button onClick={() => handleDownload(doc)} title="Download Report" style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer' }}><Download size={18} /></button>
                         <button onClick={() => handleDelete(doc.id)} title="Delete Document" style={{ background: 'none', border: 'none', padding: 0, color: '#f87171', cursor: 'pointer' }}><Trash2 size={18} /></button>
@@ -217,12 +217,12 @@ const DocumentLibrary = () => {
           </tbody>
         </table>
         
-        <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.9rem' }}>
+        <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
           <div>Showing 1 to {filteredDocuments.length} of {documents.length} results</div>
           <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'default' }}>{'<'}</button>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid currentColor', borderRadius: '6px', background: '#2563eb', color: '#fff', cursor: 'default' }}>1</button>
-            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', cursor: 'default' }}>{'>'}</button>
+            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: 'var(--bg-card)', cursor: 'default' }}>{'<'}</button>
+            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid currentColor', borderRadius: '6px', background: 'var(--accent-blue)', color: 'var(--bg-card)', cursor: 'default' }}>1</button>
+            <button style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', background: 'var(--bg-card)', cursor: 'default' }}>{'>'}</button>
           </div>
         </div>
       </div>
@@ -234,7 +234,7 @@ const DocumentLibrary = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, background: '#0f172a', zIndex: 100 }}
+              style={{ position: 'fixed', inset: 0, background: 'var(--bg-main)', zIndex: 100 }}
               onClick={() => setIsSidePanelOpen(false)}
             />
             <motion.div 
@@ -242,61 +242,61 @@ const DocumentLibrary = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '450px', background: '#fff', zIndex: 101, display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 15px rgba(0,0,0,0.1)' }}
+              style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '450px', background: 'var(--bg-card)', zIndex: 101, display: 'flex', flexDirection: 'column', boxShadow: '-4px 0 15px rgba(0,0,0,0.1)' }}
             >
               <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: 600 }}>Document Analysis</h2>
+                <h2 style={{ fontSize: '1.25rem', color: 'var(--text-main)', fontWeight: 600 }}>Document Analysis</h2>
                 <button onClick={() => setIsSidePanelOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', display: 'flex' }}><X size={20} color="#64748b" /></button>
               </div>
               <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                  
                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                   <div style={{ width: '48px', height: '48px', background: '#eff6ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', flexShrink: 0 }}>
+                   <div style={{ width: '48px', height: '48px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-blue)', flexShrink: 0 }}>
                       <FileText size={24} />
                    </div>
                    <div>
-                     <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '0.25rem', fontWeight: 600 }}>{selectedDoc.filename}</h3>
-                     <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{(selectedDoc.size / 1024).toFixed(1)} KB • Uploaded on {new Date(selectedDoc.uploaded_at).toLocaleDateString()}</div>
+                     <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.25rem', fontWeight: 600 }}>{selectedDoc.filename}</h3>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{(selectedDoc.size / 1024).toFixed(1)} KB • Uploaded on {new Date(selectedDoc.uploaded_at).toLocaleDateString()}</div>
                    </div>
                  </div>
 
                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                       <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Risk Level</div>
-                       <div style={{ color: selectedDoc.risk_level === 'Critical' ? '#dc2626' : '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ padding: '1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                       <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Risk Level</div>
+                       <div style={{ color: selectedDoc.risk_level === 'Critical' ? 'var(--accent-red)' : 'var(--accent-teal)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <AlertTriangle size={16} /> {selectedDoc.risk_level || 'Low'}
                        </div>
                     </div>
-                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                       <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Findings</div>
-                       <div style={{ color: '#1e293b', fontWeight: 600, fontSize: '1.1rem' }}>{selectedDoc.findings_count || 0} Issues</div>
+                    <div style={{ padding: '1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                       <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Findings</div>
+                       <div style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1.1rem' }}>{selectedDoc.findings_count || 0} Issues</div>
                     </div>
                  </div>
 
                  <div>
-                    <h4 style={{ color: '#1e293b', fontSize: '1rem', marginBottom: '1rem', fontWeight: 600, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>System Summary</h4>
-                    <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    <h4 style={{ color: 'var(--text-main)', fontSize: '1rem', marginBottom: '1rem', fontWeight: 600, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>System Summary</h4>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
                       The AI compliance engine has successfully crawled and parsed this document against 4 active frameworks. Text extraction confidence is rated at 98%.
                     </p>
                  </div>
 
                  <div>
-                    <h4 style={{ color: '#1e293b', fontSize: '1rem', marginBottom: '1rem', fontWeight: 600, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>Key Flagged Entries</h4>
+                    <h4 style={{ color: 'var(--text-main)', fontSize: '1rem', marginBottom: '1rem', fontWeight: 600, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>Key Flagged Entries</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                       <div style={{ background: '#fef2f2', borderLeft: '3px solid #dc2626', padding: '1rem', borderRadius: '4px' }}>
+                       <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '3px solid #dc2626', padding: '1rem', borderRadius: '4px' }}>
                           <div style={{ color: '#991b1b', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Confidentiality Clause - Page 4</div>
-                          <div style={{ color: '#b91c1c', fontSize: '0.85rem' }}>Missing GDPR disclosure regarding data processing jurisdiction.</div>
+                          <div style={{ color: 'var(--accent-red)', fontSize: '0.85rem' }}>Missing GDPR disclosure regarding data processing jurisdiction.</div>
                        </div>
                     </div>
                  </div>
 
               </div>
-              <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', gap: '1rem' }}>
-                 <button className="btn btn-outline" style={{ flex: 1, background: '#fff', border: '1px solid #cbd5e1', color: '#475569', fontWeight: 600, padding: '0.6rem', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsSidePanelOpen(false)}>Close panel</button>
+              <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #e2e8f0', background: 'var(--bg-main)', display: 'flex', gap: '1rem' }}>
+                 <button className="btn btn-outline" style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid #cbd5e1', color: 'var(--text-muted)', fontWeight: 600, padding: '0.6rem', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setIsSidePanelOpen(false)}>Close panel</button>
                  <button 
                     className="btn btn-primary" 
                     onClick={() => navigate(`/findings?document_id=${selectedDoc.id}`)}
-                    style={{ flex: 1, background: '#2563eb', color: '#fff', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center', padding: '0.6rem', borderRadius: '6px', cursor: 'pointer', border: 'none' }}
+                    style={{ flex: 1, background: 'var(--accent-blue)', color: 'var(--bg-card)', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center', padding: '0.6rem', borderRadius: '6px', cursor: 'pointer', border: 'none' }}
                   >
                     <ShieldCheck size={18} /> Resolve Risks
                  </button>

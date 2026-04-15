@@ -16,25 +16,25 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-main)', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
       <div style={{ width: '100%', maxWidth: '480px' }}>
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="card"
-          style={{ background: '#fff', padding: '3rem 2rem', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)' }}
+          style={{ background: 'var(--bg-card)', padding: '3rem 2rem', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)' }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ background: '#dbeafe', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ background: 'var(--bg-card)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
               <Key size={32} color="#2563eb" />
             </div>
-            <h1 style={{ color: '#1e293b', fontSize: '1.75rem', marginBottom: '0.5rem' }}>Forgot Password?</h1>
-            <p style={{ color: '#64748b' }}>No worries, we'll send you reset instructions.</p>
+            <h1 style={{ color: 'var(--text-main)', fontSize: '1.75rem', marginBottom: '0.5rem' }}>Forgot Password?</h1>
+            <p style={{ color: 'var(--text-muted)' }}>No worries, we'll send you reset instructions.</p>
           </div>
 
           <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>Email address</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>Email address</label>
               <input 
                 type="email" 
                 placeholder="Enter your email" 
@@ -50,22 +50,22 @@ const ForgotPassword = () => {
             </button>
 
             {notice && (
-              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.75rem 1rem', color: '#1e40af', fontSize: '0.9rem' }}>
+              <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.75rem 1rem', color: 'var(--accent-blue)', fontSize: '0.9rem' }}>
                 {notice}
               </div>
             )}
           </form>
 
           <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-            <Link to="/login" style={{ color: '#475569', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, textDecoration: 'none' }}>
+            <Link to="/login" style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, textDecoration: 'none' }}>
               <ArrowLeft size={16} /> Back to Login
             </Link>
           </div>
         </motion.div>
 
-        <div style={{ textAlign: 'center', marginTop: '2rem', color: '#94a3b8', fontSize: '0.85rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           Protected by reCAPTCHA and subject to the <br />
-          <a href="https://example.com/privacy" target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>Privacy Policy</a> and <a href="https://example.com/terms" target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>Terms of Service</a>.
+          <a href="https://example.com/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>Privacy Policy</a> and <a href="https://example.com/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>Terms of Service</a>.
         </div>
       </div>
     </div>

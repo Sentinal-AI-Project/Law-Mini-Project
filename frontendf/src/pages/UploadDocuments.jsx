@@ -153,10 +153,10 @@ const UploadDocuments = () => {
   };
 
   const statusColor = (entry) => {
-    if (entry.status === 'uploaded' || entry.status === 'analyzed') return '#059669';
-    if (entry.status === 'analyzing') return '#2563eb';
-    if (entry.status === 'error' || entry.status === 'failed') return '#dc2626';
-    return '#d97706';
+    if (entry.status === 'uploaded' || entry.status === 'analyzed') return 'var(--accent-teal)';
+    if (entry.status === 'analyzing') return 'var(--accent-blue)';
+    if (entry.status === 'error' || entry.status === 'failed') return 'var(--accent-red)';
+    return 'var(--accent-orange)';
   };
 
   const statusLabel = (entry) => {
@@ -179,20 +179,20 @@ const UploadDocuments = () => {
               <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Upload Documents</h1>
               <p style={{ color: 'var(--text-muted)' }}>Upload documents for compliance analysis</p>
             </div>
-            <button className="btn btn-primary" onClick={handleRunAnalysis} disabled={analyzing || !files.some((f) => f.status === 'uploaded')} style={{ background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: analyzing || !files.some((f) => f.status === 'uploaded') ? 0.7 : 1 }}>
+            <button className="btn btn-primary" onClick={handleRunAnalysis} disabled={analyzing || !files.some((f) => f.status === 'uploaded')} style={{ background: 'var(--accent-blue)', color: 'var(--bg-card)', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: analyzing || !files.some((f) => f.status === 'uploaded') ? 0.7 : 1 }}>
               <Play size={18} fill="currentColor" /> {analyzing ? 'Analyzing…' : 'Run Analysis'}
             </button>
           </div>
 
-          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <Info size={20} color="#2563eb" />
-            <span style={{ fontSize: '0.9rem', color: '#1e3a8a' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--accent-blue)' }}>
               <span style={{ fontWeight: 700 }}>Note:</span> Documents are ingested in read-only mode. Your files will be analyzed for compliance without any modifications.
             </span>
           </div>
 
-          <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 600, color: '#1e293b', fontSize: '1.1rem' }}>Compliance Framework</label>
+          <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '1.1rem' }}>Compliance Framework</label>
             <CustomDropdown 
               options={['Select Framework', 'SOC 2', 'GDPR', 'HIPAA', 'ISO 27001']} 
               width="100%" 
@@ -203,18 +203,18 @@ const UploadDocuments = () => {
 
           <div 
             className="card" 
-            style={{ background: '#fff', border: '1px dashed #cbd5e1', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ background: 'var(--bg-card)', border: '1px dashed #cbd5e1', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             onClick={() => fileInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
              <input type="file" multiple ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept=".pdf,.doc,.docx,.txt,.csv" />
-             <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+             <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
                <UploadCloud size={32} color="#64748b" />
              </div>
-             <h3 style={{ fontSize: '1.25rem', color: '#1e293b', marginBottom: '0.5rem', fontWeight: 600 }}>Drop files here or click to upload</h3>
-             <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.95rem' }}>Support for contracts, invoices, emails, and policies</p>
-             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
+             <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)', marginBottom: '0.5rem', fontWeight: 600 }}>Drop files here or click to upload</h3>
+             <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>Support for contracts, invoices, emails, and policies</p>
+             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                <span>PDF</span><span>DOCX</span><span>TXT</span><span>CSV</span>
              </div>
           </div>
@@ -222,17 +222,17 @@ const UploadDocuments = () => {
           {/* Uploaded Files List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {files.length === 0 && (
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center' }}>No files selected yet.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>No files selected yet.</p>
             )}
             {files.map((entry, idx) => (
-              <div key={idx} style={{ background: entry.status === 'error' ? '#fef2f2' : entry.status === 'uploading' ? '#fffbeb' : '#ecfdf5', border: `1px solid ${entry.status === 'error' ? '#fee2e2' : entry.status === 'uploading' ? '#fde68a' : '#d1fae5'}`, borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div key={idx} style={{ background: entry.status === 'error' ? 'rgba(239, 68, 68, 0.1)' : entry.status === 'uploading' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(11, 220, 181, 0.1)', border: `1px solid ${entry.status === 'error' ? 'rgba(239, 68, 68, 0.15)' : entry.status === 'uploading' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(11, 220, 181, 0.15)'}`, borderRadius: '8px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: entry.status === 'error' ? '#fee2e2' : '#d1fae5', color: statusColor(entry), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: entry.status === 'error' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(11, 220, 181, 0.15)', color: statusColor(entry), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FileText size={20} />
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>{entry.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{entry.size} • {entry.type}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.95rem' }}>{entry.name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{entry.size} • {entry.type}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -253,45 +253,45 @@ const UploadDocuments = () => {
            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
              
              {historyDocs.length === 0 && (
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center' }}>No recent uploads.</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>No recent uploads.</div>
              )}
 
              {historyDocs.map((doc) => (
-               <div key={doc.id || doc._id} className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
+               <div key={doc.id || doc._id} className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', padding: '1.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    <div style={{ fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{doc.filename || doc.name}</div>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: doc.status === 'analyzed' ? '#ecfdf5' : doc.status === 'failed' ? '#fee2e2' : '#fef3c7', color: statusColor(doc), borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{doc.filename || doc.name}</div>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: doc.status === 'analyzed' ? 'rgba(11, 220, 181, 0.1)' : doc.status === 'failed' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.1)', color: statusColor(doc), borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
                       {statusIcon(doc)} <span style={{ textTransform: 'capitalize' }}>{statusLabel(doc)}</span>
                     </span>
                   </div>
-                  <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>Uploaded {new Date(doc.uploaded_at || doc.created_at).toLocaleDateString()}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>Uploaded {new Date(doc.uploaded_at || doc.created_at).toLocaleDateString()}</div>
                   {doc.status === 'uploading' && (
-                    <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
-                      <div style={{ width: '60%', height: '100%', background: '#2563eb' }}></div>
+                    <div style={{ width: '100%', height: '4px', background: 'var(--border-color)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                      <div style={{ width: '60%', height: '100%', background: 'var(--accent-blue)' }}></div>
                     </div>
                   )}
                   {(doc.status === 'analyzing' || doc.status === 'pending') && (
-                    <div style={{ width: '100%', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
-                      <div style={{ width: '85%', height: '100%', background: '#f59e0b', animation: 'pulse 2s infinite' }}></div>
+                    <div style={{ width: '100%', height: '4px', background: 'var(--border-color)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                      <div style={{ width: '85%', height: '100%', background: 'var(--accent-orange)', animation: 'pulse 2s infinite' }}></div>
                     </div>
                   )}
 
                   {doc.status === 'failed' && (
                     <>
-                      <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: '1rem' }}>Failed to process</div>
-                      <button onClick={handleRetryAnalysis} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}>Retry Analysis</button>
+                      <div style={{ color: 'var(--accent-red)', fontSize: '0.85rem', marginBottom: '1rem' }}>Failed to process</div>
+                      <button onClick={handleRetryAnalysis} style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', fontWeight: 500, fontSize: '0.85rem', cursor: 'pointer' }}>Retry Analysis</button>
                     </>
                   )}
                   {doc.status === 'analyzed' && (
                     <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
-                      <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
-                      <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}>Download</button>
+                      <button onClick={handleViewReport} style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', fontWeight: 500, cursor: 'pointer' }}>View Report</button>
+                      <button onClick={handleDownload} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer' }}>Download</button>
                     </div>
                   )}
                </div>
              ))}
              
-             <button onClick={() => navigate('/library')} style={{ width: '100%', marginTop: '0.5rem', padding: '1rem', border: 'none', background: 'none', color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
+             <button onClick={() => navigate('/library')} style={{ width: '100%', marginTop: '0.5rem', padding: '1rem', border: 'none', background: 'none', color: 'var(--accent-blue)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
                View All History
              </button>
 

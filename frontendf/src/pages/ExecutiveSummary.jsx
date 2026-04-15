@@ -22,11 +22,11 @@ const TrendTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: '#fff', border: '1px solid #e2e8f0',
+      background: 'var(--bg-card)', border: '1px solid #e2e8f0',
       borderRadius: '10px', padding: '0.75rem 1rem',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', fontSize: '0.85rem'
     }}>
-      <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>{label}</div>
+      <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color, display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span style={{ width: 8, height: 8, background: p.color, borderRadius: '50%', display: 'inline-block' }} />
@@ -108,10 +108,10 @@ const ExecutiveSummary = () => {
     const map = { critical: 0, high: 0, medium: 0, low: 0 };
     for (const s of bySev) { map[s._id?.toLowerCase()] = s.count; }
     return [
-      { name: 'Critical', count: map.critical, fill: '#dc2626' },
-      { name: 'High', count: map.high, fill: '#f59e0b' },
-      { name: 'Medium', count: map.medium, fill: '#3b82f6' },
-      { name: 'Low', count: map.low, fill: '#10b981' },
+      { name: 'Critical', count: map.critical, fill: 'var(--accent-red)' },
+      { name: 'High', count: map.high, fill: 'var(--accent-orange)' },
+      { name: 'Medium', count: map.medium, fill: 'var(--accent-blue)' },
+      { name: 'Low', count: map.low, fill: 'var(--accent-teal)' },
     ].filter(d => d.count > 0);
   })();
 
@@ -123,7 +123,7 @@ const ExecutiveSummary = () => {
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: 'var(--text-main)' }}>Executive Summary</h1>
           <p style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Risk oversight and compliance monitoring
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                · Auto-refresh · Last: {lastRefresh.toLocaleTimeString()}
             </span>
           </p>
@@ -131,7 +131,7 @@ const ExecutiveSummary = () => {
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button
             onClick={() => { refetch(); fetchTrends(); }}
-            style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            style={{ background: 'var(--bg-main)', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             title="Refresh now"
           >
             <RefreshCw size={16} color="#64748b" />
@@ -142,7 +142,7 @@ const ExecutiveSummary = () => {
 
       {/* Critical alert banner */}
       {stats?.dashboard?.recent_critical?.length > 0 && (
-        <div style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', boxShadow: '0 4px 15px rgba(220,38,38,0.3)' }}>
+        <div style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: 'var(--bg-card)', borderRadius: '12px', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', boxShadow: '0 4px 15px rgba(220,38,38,0.3)' }}>
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
             <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '50%' }}>
               <AlertCircle size={32} color="#fff" />
@@ -152,7 +152,7 @@ const ExecutiveSummary = () => {
               <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>{stats.dashboard.recent_critical.length} high-priority compliance violations require immediate attention</p>
             </div>
           </div>
-          <button onClick={() => navigate('/findings')} style={{ background: '#fff', color: '#dc2626', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
+          <button onClick={() => navigate('/findings')} style={{ background: 'var(--bg-card)', color: 'var(--accent-red)', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Review Now</button>
         </div>
       )}
 
@@ -163,7 +163,7 @@ const ExecutiveSummary = () => {
           onClick={handleDownloadSummary}
           style={{
             flex: 1, background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-            color: '#fff', gap: '0.75rem', padding: '1rem', border: 'none', borderRadius: '12px',
+            color: 'var(--bg-card)', gap: '0.75rem', padding: '1rem', border: 'none', borderRadius: '12px',
             fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center',
             justifyContent: 'center', transition: 'transform 0.2s, box-shadow 0.2s',
             boxShadow: '0 4px 15px rgba(79, 70, 229, 0.3)'
@@ -176,13 +176,13 @@ const ExecutiveSummary = () => {
         <button
           onClick={() => navigate('/reports')}
           style={{
-            flex: 1, background: '#fff', color: '#4f46e5', gap: '0.75rem', padding: '1rem',
+            flex: 1, background: 'var(--bg-card)', color: 'var(--accent-purple)', gap: '0.75rem', padding: '1rem',
             border: '2px solid #eef2ff', borderRadius: '12px', fontWeight: 600, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
           }}
-          onMouseOver={(e) => { e.currentTarget.style.background = '#f5f3ff'; e.currentTarget.style.borderColor = '#c7d2fe'; }}
-          onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#eef2ff'; }}
+          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-card-hover)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
         >
           <FileText size={20} /> View Full Report
         </button>
@@ -191,19 +191,19 @@ const ExecutiveSummary = () => {
       {/* KPI stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
-          { label: 'Overall Risk Score', value: loading ? '—' : `${100 - (stats?.dashboard?.complianceScore || 0)}`, suffix: '/100', icon: <Shield size={24} color="#3b82f6" />, bg: '#eff6ff' },
-          { label: 'Open Violations', value: loading ? '—' : (stats?.dashboard?.totalFindings || 0), icon: <AlertTriangle size={24} color="#d97706" />, bg: '#fef3c7' },
-          { label: 'Compliance Rate', value: loading ? '—' : `${stats?.dashboard?.complianceScore || 0}%`, icon: <CheckCircle size={24} color="#10b981" />, bg: '#ecfdf5' },
-          { label: 'Documents Processed', value: loading ? '—' : (stats?.dashboard?.completedDocs || stats?.dashboard?.totalDocuments || 0), icon: <Clock size={24} color="#9333ea" />, bg: '#f3e8ff' },
+          { label: 'Overall Risk Score', value: loading ? '—' : `${100 - (stats?.dashboard?.complianceScore || 0)}`, suffix: '/100', icon: <Shield size={24} color="#3b82f6" />, bg: 'rgba(59, 130, 246, 0.1)' },
+          { label: 'Open Violations', value: loading ? '—' : (stats?.dashboard?.totalFindings || 0), icon: <AlertTriangle size={24} color="#d97706" />, bg: 'rgba(245, 158, 11, 0.1)' },
+          { label: 'Compliance Rate', value: loading ? '—' : `${stats?.dashboard?.complianceScore || 0}%`, icon: <CheckCircle size={24} color="#10b981" />, bg: 'rgba(11, 220, 181, 0.1)' },
+          { label: 'Documents Processed', value: loading ? '—' : (stats?.dashboard?.completedDocs || stats?.dashboard?.totalDocuments || 0), icon: <Clock size={24} color="#9333ea" />, bg: 'var(--bg-card-hover)' },
         ].map(({ label, value, suffix, icon, bg }) => (
-          <div key={label} className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div key={label} className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ background: bg, padding: '10px', borderRadius: '8px' }}>{icon}</div>
             </div>
             <div>
-              <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{label}</div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>
-                {value}<span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>{suffix || ''}</span>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{label}</div>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                {value}<span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 500 }}>{suffix || ''}</span>
               </div>
             </div>
           </div>
@@ -213,21 +213,21 @@ const ExecutiveSummary = () => {
       {/* Risk Trends + Violations row */}
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
         {/* Risk Trends Line Chart */}
-        <div className="card" style={{ flex: 2, background: '#fff', border: '1px solid #e2e8f0' }}>
+        <div className="card" style={{ flex: 2, background: 'var(--bg-card)', border: '1px solid #e2e8f0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.1rem', color: '#1e293b' }}>Risk Trends Over Time</h3>
-              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Live daily risk trajectory analysis</p>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>Risk Trends Over Time</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Live daily risk trajectory analysis</p>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', background: '#f8fafc', padding: '0.25rem', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-main)', padding: '0.25rem', borderRadius: '8px' }}>
               {['30D', '90D', '1Y'].map(w => (
                 <button
                   key={w}
                   onClick={() => setTrendWindow(w)}
                   style={{
                     padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                    background: trendWindow === w ? '#fff' : 'transparent',
-                    color: trendWindow === w ? '#3b82f6' : '#64748b',
+                    background: trendWindow === w ? 'var(--bg-card)' : 'transparent',
+                    color: trendWindow === w ? 'var(--accent-blue)' : 'var(--text-muted)',
                     boxShadow: trendWindow === w ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
                     fontSize: '0.85rem', fontWeight: trendWindow === w ? 600 : 500,
                     transition: 'all 0.2s'
@@ -240,16 +240,16 @@ const ExecutiveSummary = () => {
           </div>
 
           {trendLoading ? (
-            <div style={{ height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+            <div style={{ height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
               <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', marginRight: '0.5rem' }} /> Loading trend data…
             </div>
           ) : !hasTrendData ? (
-            <div style={{ height: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #e2e8f0' }}>
-              <div style={{ background: '#fff', padding: '14px', borderRadius: '50%', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+            <div style={{ height: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', borderRadius: '12px', border: '2px dashed #e2e8f0' }}>
+              <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: '50%', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                 <Clock size={28} color="#94a3b8" />
               </div>
-              <h4 style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '0.25rem' }}>No Risk Events Yet</h4>
-              <p style={{ color: '#94a3b8', fontSize: '0.82rem', textAlign: 'center', maxWidth: '280px' }}>
+              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '0.25rem' }}>No Risk Events Yet</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center', maxWidth: '280px' }}>
                 Upload and analyze documents to populate the risk trajectory chart.
               </p>
             </div>
@@ -259,13 +259,13 @@ const ExecutiveSummary = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={v => `${v}%`}
@@ -289,27 +289,27 @@ const ExecutiveSummary = () => {
         </div>
 
         {/* Top Recurring Violations */}
-        <div className="card" style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '0.5rem' }}>Top Recurring Violations</h3>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '2rem' }}>Most frequent compliance issues</p>
+        <div className="card" style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>Top Recurring Violations</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>Most frequent compliance issues</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             {loading ? (
-              <div style={{ color: '#64748b', textAlign: 'center' }}>Loading violations...</div>
+              <div style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Loading violations...</div>
             ) : (!stats?.dashboard?.findings?.by_risk_type || stats.dashboard.findings.by_risk_type.length === 0) ? (
-              <div style={{ color: '#64748b', textAlign: 'center', padding: '1rem' }}>No violations found.</div>
+              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No violations found.</div>
             ) : (
               stats.dashboard.findings.by_risk_type.slice(0, 5).map((v, i) => {
                 const total = stats.dashboard.totalFindings || 1;
                 const pct = Math.round((v.count / total) * 100);
-                const color = i === 0 ? '#ef4444' : (i < 3 ? '#f59e0b' : '#3b82f6');
+                const color = i === 0 ? 'var(--accent-red)' : (i < 3 ? 'var(--accent-orange)' : 'var(--accent-blue)');
                 return (
                   <div key={i}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                      <span style={{ color: '#1e293b', fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>{v._id || 'Unknown'} Risks</span>
+                      <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>{v._id || 'Unknown'} Risks</span>
                       <span style={{ color, fontWeight: 700, fontSize: '0.9rem' }}>{v.count}</span>
                     </div>
-                    <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Frequency: {pct}% of total</div>
-                    <div style={{ width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Frequency: {pct}% of total</div>
+                    <div style={{ width: '100%', height: '6px', background: 'var(--bg-card-hover)', borderRadius: '3px', overflow: 'hidden' }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.8s ease' }} />
                     </div>
                   </div>
@@ -322,21 +322,21 @@ const ExecutiveSummary = () => {
 
 
       {/* Severity Distribution Bar Chart */}
-      <div className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+      <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.1rem', color: '#1e293b' }}>Findings by Severity</h3>
-          <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Live distribution from database</p>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>Findings by Severity</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Live distribution from database</p>
         </div>
         {severityData.length === 0 ? (
-          <div style={{ height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: '#f8fafc', borderRadius: '10px', border: '2px dashed #e2e8f0' }}>
+          <div style={{ height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--bg-main)', borderRadius: '10px', border: '2px dashed #e2e8f0' }}>
             No findings data yet — upload and analyze a document to see results.
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={severityData} margin={{ top: 0, right: 10, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#475569' }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--text-muted)' }} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontSize: '0.85rem' }}
                 formatter={(value) => [value, 'Findings']}

@@ -32,9 +32,9 @@ const CustomDropdown = ({ options, defaultValue, onChange, width = '200px' }) =>
           padding: '0.6rem 1rem', 
           borderRadius: '8px', 
           border: '1px solid #e2e8f0', 
-          background: '#fff', 
+          background: 'var(--bg-card)', 
           fontSize: '0.95rem',
-          color: '#1e293b',
+          color: 'var(--text-main)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -63,7 +63,7 @@ const CustomDropdown = ({ options, defaultValue, onChange, width = '200px' }) =>
               left: 0,
               right: 0,
               marginTop: '0.5rem',
-              background: '#fff',
+              background: 'var(--bg-card)',
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
               padding: '0.5rem',
@@ -85,14 +85,14 @@ const CustomDropdown = ({ options, defaultValue, onChange, width = '200px' }) =>
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  background: selected === option ? '#eff6ff' : 'transparent',
-                  color: selected === option ? '#2563eb' : '#475569',
+                  background: selected === option ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                  color: selected === option ? 'var(--accent-blue)' : 'var(--text-muted)',
                   fontWeight: selected === option ? 600 : 500,
                   transition: 'background 0.15s ease',
                   fontSize: '0.9rem'
                 }}
                 onMouseEnter={(e) => {
-                  if (selected !== option) e.currentTarget.style.background = '#f8fafc';
+                  if (selected !== option) e.currentTarget.style.background = 'var(--bg-main)';
                 }}
                 onMouseLeave={(e) => {
                   if (selected !== option) e.currentTarget.style.background = 'transparent';

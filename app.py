@@ -19,7 +19,88 @@ def home():
     return {"message": "NLP AI Service running 🚀"}
 
 import requests
+import json
+import os
 import tempfile
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "your_openrouter_api_key_here")
+
+import time
+
+def get_remediation_suggestion(clause, risk_description):
+    """Call OpenRouter to get a suggested compliant clause with retry logic."""
+    if not OPENROUTER_API_KEY or OPENROUTER_API_KEY == "your_openrouter_api_key_here":
+        return "Please configure OPENROUTER_API_KEY to see remediation suggestions."
+    
+    max_retries = 5
+    base_delay = 5 # Increased delay to be safer
+    
+    for attempt in range(max_retries):
+        try:
+            prompt = f"""
+            You are a legal compliance expert. 
+            The following legal clause has been flagged as HIGH RISK.
+            
+            Original Clause: "{clause}"
+            Risk Found: {risk_description}
+            
+            Please provide a professional, legally compliant "Sample Compliant Clause" that remediates the risk while maintaining the original intent where possible. 
+            Format your response as a direct replacement clause text only.
+            """
+            
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-OpenRouter-Title": "Sentinel Law AI"
+                },
+                data=json.dumps({
+                    "model": "google/gemini-2.0-flash-lite-001", 
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ]
+                }),
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result['choices'][0]['message']['content'].strip()
+            elif response.status_code == 429:
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"⚠️ AI Rate limit hit (429). Retrying in {delay}s... (Attempt {attempt + 1})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    return "AI service is currently busy (Rate Limit). Please try again in a moment."
+            else:
+                error_data = response.json() if response.content else {"message": "No error details provided"}
+                print(f"❌ OpenRouter Error ({response.status_code}): {json.dumps(error_data)}")
+                return f"AI Generation Failed (Status {response.status_code}): {error_data.get('error', {}).get('message', 'Unknown error')}"
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(base_delay)
+                continue
+            return f"Remediation error: {str(e)}"
+    return "Remediation generation failed after multiple attempts."
+
+class FixRequest(BaseModel):
+    clause: str
+    explanation: str
+
+@app.post("/generate-fix")
+async def generate_fix(request: FixRequest):
+    """Generate a remediation suggestion for a single finding on demand."""
+    print(f"✨ Generating on-demand AI remediation...")
+    suggestion = get_remediation_suggestion(request.clause, request.explanation)
+    return {"suggested_fix": suggestion}
 
 @app.post("/analyze")
 async def analyze_doc(request: AnalyzeRequest):
@@ -50,23 +131,28 @@ async def analyze_doc(request: AnalyzeRequest):
         report_filename = f"report_{request.doc_id}.pdf"
         results = audit_pipeline(target_path, report_filename=report_filename)
         print(f"📊 Processing complete. Found {len(results)} raw findings.")
+        
+        # Map results to what Node.js expects
+        mapped_findings = []
+        for r in results:
+            severity = r["severity"].lower()
+            
+            # Note: We no longer generate suggested_fix here upfront
+            
+            mapped_findings.append({
+                "risk_type": r["law"],
+                "severity": severity,
+                "confidence": r["confidence"],
+                "description": r["explanation"],
+                "evidence_snippet": r["clause"],
+                "suggested_fix": None, # Will be generated on demand
+                "clause_id": None,
+                "policy_ref_id": None
+            })
+
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-
-    # Map results to what Node.js expects
-    # Node expects: risk_type, severity, confidence, description, evidence_snippet
-    mapped_findings = []
-    for r in results:
-        mapped_findings.append({
-            "risk_type": r["law"],
-            "severity": r["severity"].lower(), # Node expects lowercase 'high', 'medium', etc.
-            "confidence": r["confidence"],
-            "description": r["explanation"],
-            "evidence_snippet": r["clause"],
-            "clause_id": None,
-            "policy_ref_id": None
-        })
 
     return {
         "doc_id": request.doc_id,

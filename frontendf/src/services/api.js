@@ -315,6 +315,9 @@ export const findingsAPI = {
 
   /** PATCH /api/findings/:id */
   update: (id, payload) => request('PATCH', `/findings/${id}`, payload),
+
+  /** POST /api/findings/:id/generate-fix */
+  generateFix: (id) => request('POST', `/findings/${id}/generate-fix`),
 };
 
 // ─── Reports ──────────────────────────────────────────────────────────────────

@@ -52,6 +52,7 @@ exports.analyze = async (doc, selectedFrameworks = ['General']) => {
                 confidence: f.confidence,
                 description: f.description || f.explanation || f.reason || f.finding || 'Detailed finding analysis available in document.',
                 evidence_snippet: f.evidence_snippet,
+                suggested_fix: f.suggested_fix || null,
                 clause_id: f.clause_id || null,
                 policy_ref_id: f.policy_ref_id || null,
             }));
@@ -83,5 +84,24 @@ exports.analyze = async (doc, selectedFrameworks = ['General']) => {
             .eq('id', docId);
 
         console.error(`NLP analysis failed for document ${docId}: ${err.message}`);
+    }
+};
+
+/**
+ * Generate a specific remediation suggestion for a single finding on demand.
+ */
+exports.generateFixSuggestion = async (clause, explanation) => {
+    try {
+        const { data } = await axios.post(`${NLP_SERVICE_URL}/generate-fix`, {
+            clause,
+            explanation
+        }, {
+            timeout: 60000 // 1 minute timeout for LLM generation
+        });
+
+        return data.suggested_fix || null;
+    } catch (err) {
+        console.error(`Remediation generation failed: ${err.message}`);
+        throw err;
     }
 };

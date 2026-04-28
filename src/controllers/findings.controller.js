@@ -38,6 +38,7 @@ const attachEntityMaps = async (findings) => {
         description: row.description,
         explanation: row.explanation,
         evidence_snippet: row.evidence_snippet,
+        suggested_fix: row.suggested_fix,
         policy_ref_id: policyMap.get(row.policy_ref_id) || row.policy_ref_id,
         notes: row.notes,
         status: row.status,
@@ -58,7 +59,7 @@ exports.listFindings = async (req, res) => {
 
         let query = supabase
             .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, policy_ref_id, created_at, notes, status', { count: 'exact' })
+            .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, suggested_fix, created_at, notes, status', { count: 'exact' })
             .gte('confidence', minConfidence);
 
         if (severity) query = query.eq('severity', severity);
@@ -98,7 +99,7 @@ exports.getFinding = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, explanation, evidence_snippet, policy_ref_id, created_at, notes, status')
+            .select('id, document_id, clause_id, risk_type, severity, confidence, description, explanation, evidence_snippet, suggested_fix, policy_ref_id, created_at, notes, status')
             .eq('id', req.params.id)
             .maybeSingle();
 
@@ -199,5 +200,48 @@ exports.updateFinding = async (req, res) => {
             ? 'Database schema out of sync. Please run the SQL migration: ALTER TABLE public.findings ADD COLUMN notes TEXT, ADD COLUMN status TEXT DEFAULT \'pending\';'
             : 'Failed to update finding';
         res.status(500).json({ message, error: err.message });
+    }
+};
+
+/**
+ * POST /api/findings/:id/generate-fix
+ * Generate AI remediation suggestion for a finding
+ */
+exports.generateFixSuggestion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // 1. Get finding details
+        const { data: finding, error: fetchError } = await supabase
+            .from('findings')
+            .select('evidence_snippet, description')
+            .eq('id', id)
+            .single();
+            
+        if (fetchError || !finding) {
+            return res.status(404).json({ message: 'Finding not found' });
+        }
+        
+        // 2. Call NLP service
+        const nlpService = require('../services/nlp.service');
+        const suggestedFix = await nlpService.generateFixSuggestion(
+            finding.evidence_snippet,
+            finding.description
+        );
+        
+        // 3. Save suggested fix back to DB
+        const { data: updated, error: updateError } = await supabase
+            .from('findings')
+            .update({ suggested_fix: suggestedFix })
+            .eq('id', id)
+            .select()
+            .single();
+            
+        if (updateError) throw updateError;
+        
+        res.json({ suggested_fix: suggestedFix, finding: updated });
+    } catch (err) {
+        console.error('Generate fix error:', err);
+        res.status(500).json({ message: 'Failed to generate AI remediation', error: err.message });
     }
 };

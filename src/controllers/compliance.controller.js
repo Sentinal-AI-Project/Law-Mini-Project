@@ -156,7 +156,7 @@ exports.checkCompliance = async (req, res) => {
 
         const { data: findings, error: findingsError } = await supabase
             .from('findings')
-            .select('id, document_id, policy_ref_id, risk_type, severity, confidence, description, evidence_snippet, created_at')
+            .select('id, document_id, policy_ref_id, risk_type, severity, confidence, description, evidence_snippet, suggested_fix, created_at')
             .eq('document_id', req.params.docId)
             .gte('confidence', 0.7)
             .order('created_at', { ascending: false });

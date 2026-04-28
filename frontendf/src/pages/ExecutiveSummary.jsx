@@ -9,7 +9,7 @@ import CustomDropdown from '../components/CustomDropdown';
 import { complianceAPI } from '../services/api';
 import { useComplianceData } from '../hooks/useComplianceData';
 import {
-  LineChart, Line, BarChart, Bar, Cell,
+  LineChart, Line, AreaChart, Area, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
 } from 'recharts';
@@ -255,8 +255,18 @@ const ExecutiveSummary = () => {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -273,17 +283,19 @@ const ExecutiveSummary = () => {
                 <Tooltip content={<TrendTooltip />} />
                 <Legend
                   iconType="circle" iconSize={8}
-                  wrapperStyle={{ fontSize: '0.82rem', paddingTop: '0.75rem' }}
+                  wrapperStyle={{ fontSize: '0.82rem', paddingTop: '1.25rem' }}
                 />
-                <Line
+                <Area
                   type="monotone" dataKey="riskScore" name="Risk Score"
-                  stroke="#ef4444" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }}
+                  stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorRisk)"
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
-                <Line
+                <Area
                   type="monotone" dataKey="complianceRate" name="Compliance Rate"
-                  stroke="#10b981" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }}
+                  stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorComp)"
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
@@ -333,15 +345,16 @@ const ExecutiveSummary = () => {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={severityData} margin={{ top: 0, right: 10, left: -25, bottom: 0 }}>
+            <BarChart data={severityData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#475569' }} tickLine={false} axisLine={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <Tooltip
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontSize: '0.85rem' }}
+                cursor={{ fill: '#f8fafc' }}
+                contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '0.85rem' }}
                 formatter={(value) => [value, 'Findings']}
               />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={60}>
+              <Bar dataKey="count" radius={[4, 4, 4, 4]} maxBarSize={45}>
                 {severityData.map((entry, index) => (
                   <Cell key={index} fill={entry.fill} />
                 ))}

@@ -4,7 +4,6 @@ import { FileText, AlertTriangle, HelpCircle, Clock } from 'lucide-react';
 import { complianceAPI, docsAPI } from '../services/api';
 import { useComplianceData } from '../hooks/useComplianceData';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import CustomDropdown from '../components/CustomDropdown';
 
 const riskData = [
   { name: 'Low', value: 50.6, color: '#10b981' },
@@ -65,7 +64,6 @@ const ComplianceDashboard = () => {
           <h1 style={{ fontSize: '1.75rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>Compliance Dashboard</h1>
           <p style={{ color: 'var(--text-muted)' }}>Monitor your compliance analysis in real-time</p>
         </div>
-        <CustomDropdown options={['SOX Framework', 'GDPR', 'HIPAA']} width="170px" />
       </div>
 
 

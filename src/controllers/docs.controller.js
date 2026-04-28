@@ -36,6 +36,7 @@ const mapFinding = (row) => ({
     confidence: row.confidence,
     description: row.description,
     evidence_snippet: row.evidence_snippet,
+    suggested_fix: row.suggested_fix,
     policy_ref_id: row.policy_ref_id,
     created_at: row.created_at,
 });

@@ -206,14 +206,7 @@ const AuditReport = () => {
               </div>
             )}
 
-            <button
-              className="btn btn-primary"
-              onClick={handleGenerate}
-              disabled={generating || !selectedDoc}
-              style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: '#2563eb', color: '#fff', padding: '0.8rem', opacity: (generating || !selectedDoc) ? 0.7 : 1 }}
-            >
-              <FileText size={18} /> {generating ? 'Generating…' : 'Generate Report'}
-            </button>
+
           </div>
         </div>
 
@@ -320,23 +313,7 @@ const AuditReport = () => {
                </div>
             </div>
 
-            {/* Generated Reports */}
-            {reports.length > 0 && (
-              <div style={{ marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', color: '#1e293b', marginBottom: '1rem' }}>Generated Reports</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {reports.map((r, idx) => (
-                    <div key={r._id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <div>
-                        <div style={{ fontWeight: 500, fontSize: '0.9rem', color: '#1e293b' }}>Report — {r.framework || framework}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{r.created_at ? new Date(r.created_at).toLocaleString() : 'Just now'}</div>
-                      </div>
-                      <CheckCircle2 size={18} color="#10b981" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
 
           </div>
         </div>

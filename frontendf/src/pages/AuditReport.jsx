@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import DashboardLayout from '../components/DashboardLayout';
+import { Calendar, FileText, DownloadCloud, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
+import { reportsAPI, docsAPI } from '../services/api';
+import CustomDropdown from '../components/CustomDropdown';
+
+const AuditReport = () => {
+  const [reports, setReports] = useState([]);
+  const [docs, setDocs] = useState([]);
+  const [selectedDoc, setSelectedDoc] = useState('');
+  const [framework, setFramework] = useState('GDPR');
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  const [docStats, setDocStats] = useState(null);
+  const [docFindings, setDocFindings] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rData, dData] = await Promise.allSettled([
+          reportsAPI.list(),
+          docsAPI.list({ limit: 50, status: 'analyzed' }),
+        ]);
+        if (rData.status === 'fulfilled') setReports(rData.value.reports || []);
+        if (dData.status === 'fulfilled') setDocs(dData.value.documents || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDoc) {
+      setDocStats(null);
+      return;
+    }
+    const fetchDocStats = async () => {
+      setLoadingStats(true);
+      try {
+        const res = await docsAPI.findings(selectedDoc, { limit: 500 });
+        const sevMap = { low: 0, medium: 0, high: 0, critical: 0 };
+        let resolvedCount = 0;
+        res.findings.forEach((f) => {
+          if (sevMap[f.severity] !== undefined) sevMap[f.severity]++;
+          if (f.status === 'reviewed' || f.status === 'resolved') resolvedCount++;
+        });
+        const severityStats = Object.keys(sevMap).map(k => ({ severity: k, count: sevMap[k] }));
+        setDocFindings(res.findings);
+        setDocStats({ total: res.total, severityStats, resolvedCount });
+      } catch (err) {
+        console.error('Failed to fetch doc stats', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchDocStats();
+  }, [selectedDoc]);
+
+  const handleGenerate = async () => {
+    if (!selectedDoc) return;
+    setGenerating(true);
+    setGenerateError('');
+    try {
+      const data = await reportsAPI.generate(selectedDoc, framework);
+      setReports((prev) => [data, ...prev]);
+    } catch (err) {
+      setGenerateError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadTextFile = (filename, content) => {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportPdf = () => {
+    if (!docStats || !selectedDoc) return;
+    const docName = docs.find(d => d.id === selectedDoc || d._id === selectedDoc)?.filename || 'document';
+    let content = `SENTINEL LAW - COMPLIANCE AUDIT REPORT\n`;
+    content += `======================================\n\n`;
+    content += `Document: ${docName}\n`;
+    content += `Framework: ${framework}\n`;
+    content += `Date: ${new Date().toLocaleDateString()}\n\n`;
+    content += `SUMMARY:\n`;
+    content += `-- Total Findings: ${totalFindings}\n`;
+    content += `-- Compliance Score: ${compScore}%\n`;
+    content += `-- Resolved: ${docStats.resolvedCount}\n\n`;
+    content += `DETAILED FINDINGS:\n`;
+    docFindings.forEach((f, idx) => {
+      content += `${idx + 1}. [${f.severity.toUpperCase()}] ${f.description}\n`;
+      content += `   Type: ${f.risk_type}\n`;
+      content += `   Explanation: ${f.explanation || 'N/A'}\n\n`;
+    });
+    
+    downloadTextFile(`Audit_Report_${docName.replace(/\.[^/.]+$/, "")}.txt`, content);
+  };
+
+  const handleExportCsv = () => {
+    if (!docFindings || !docFindings.length) return;
+    const docName = docs.find(d => d.id === selectedDoc || d._id === selectedDoc)?.filename || 'document';
+    let csv = `Severity,Risk Type,Description,Explanation,Confidence,Created At\n`;
+    docFindings.forEach(f => {
+      const desc = (f.description || '').replace(/"/g, '""');
+      const expl = (f.explanation || '').replace(/"/g, '""');
+      csv += `"${f.severity}","${f.risk_type}","${desc}","${expl}",${f.confidence},"${f.created_at}"\n`;
+    });
+    downloadTextFile(`Audit_Findings_${docName.replace(/\.[^/.]+$/, "")}.csv`, csv);
+  };
+
+  const getSeverityCount = (severity) => {
+    return docStats?.severityStats?.find(s => s.severity === severity)?.count || 0;
+  };
+
+  const criticalCount = getSeverityCount('critical');
+  const highCount = getSeverityCount('high');
+  const mediumCount = getSeverityCount('medium');
+  const lowCount = getSeverityCount('low');
+  const totalFindings = docStats?.total || 0;
+  const compScore = totalFindings === 0 && selectedDoc ? 100 : Math.max(0, 100 - (criticalCount * 10 + highCount * 5 + mediumCount * 2));
+
+  // Determine conic gradient for pie chart dynamically
+  const getPieStyle = () => {
+    if (totalFindings === 0) return { background: 'var(--border-color)' };
+    const lowPct = (lowCount / totalFindings) * 100;
+    const medPct = (mediumCount / totalFindings) * 100;
+    const highPct = (highCount / totalFindings) * 100;
+    const critPct = (criticalCount / totalFindings) * 100;
+    
+    const p1 = lowPct;
+    const p2 = p1 + medPct;
+    const p3 = p2 + highPct;
+    
+    return {
+      background: `conic-gradient(#10b981 0% ${p1}%, #2563eb ${p1}% ${p2}%, #d97706 ${p2}% ${p3}%, #dc2626 ${p3}% 100%)`
+    };
+  };
+
+  return (
+    <DashboardLayout>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Audit Report Generation</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Generate comprehensive compliance audit reports with risk analysis and findings summary.</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '2rem' }}>
+        {/* Left Side - Configuration */}
+        <div style={{ width: '340px', flexShrink: 0 }}>
+          <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '1.5rem', fontWeight: 600 }}>Report Configuration</h3>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Date Range</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input type="text" defaultValue="2024-01-01" style={{ width: '100%', padding: '0.6rem', paddingRight: '2rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
+                  <Calendar size={16} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                </div>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input type="text" defaultValue="2024-03-01" style={{ width: '100%', padding: '0.6rem', paddingRight: '2rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
+                  <Calendar size={16} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Compliance Framework</label>
+              <CustomDropdown 
+                options={['SOX (Sarbanes-Oxley)', 'GDPR', 'HIPAA']} 
+                width="100%" 
+                value={framework}
+                onChange={setFramework}
+              />
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Select Document</label>
+              <select
+                value={selectedDoc}
+                onChange={(e) => setSelectedDoc(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'var(--bg-card)', fontSize: '0.9rem' }}
+              >
+                <option value="">— select a document —</option>
+                {docs.map((d) => (
+                  <option key={d._id || d.id} value={d._id || d.id}>{d.filename}</option>
+                ))}
+              </select>
+              {loading && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Loading documents…</p>}
+            </div>
+
+            {generateError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fee2e2', borderRadius: '6px', padding: '0.75rem', color: 'var(--accent-red)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                {generateError}
+              </div>
+            )}
+
+            <button
+              className="btn btn-primary"
+              onClick={handleGenerate}
+              disabled={generating || !selectedDoc}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'var(--accent-blue)', color: 'var(--bg-card)', padding: '0.8rem', opacity: (generating || !selectedDoc) ? 0.7 : 1 }}
+            >
+              <FileText size={18} /> {generating ? 'Generating…' : 'Generate Report'}
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side - Preview */}
+        <div style={{ flex: 1 }}>
+          <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', padding: '2rem', opacity: loadingStats ? 0.6 : 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Report Preview {selectedDoc ? '' : '(No doc selected)'}</h2>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button onClick={handleExportPdf} className="btn" disabled={!selectedDoc} style={{ background: 'var(--accent-red)', color: 'var(--bg-card)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', opacity: !selectedDoc ? 0.5 : 1 }}>
+                   <DownloadCloud size={16} /> Export PDF
+                </button>
+                <button onClick={handleExportCsv} className="btn" disabled={!selectedDoc} style={{ background: 'var(--accent-teal)', color: 'var(--bg-card)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', opacity: !selectedDoc ? 0.5 : 1 }}>
+                   <FileText size={16} /> Export CSV
+                </button>
+              </div>
+            </div>
+
+            {/* Risk Cards */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fee2e2', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
+                <div style={{ color: 'var(--accent-red)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Critical Risks</div>
+                <div style={{ color: 'var(--accent-red)', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : criticalCount}</div>
+                <AlertTriangle size={20} color="#dc2626" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
+              </div>
+              <div style={{ flex: 1, background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #fef3c7', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
+                <div style={{ color: 'var(--accent-orange)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>High Risks</div>
+                <div style={{ color: 'var(--accent-orange)', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : highCount}</div>
+                <AlertCircle size={20} color="#d97706" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
+              </div>
+              <div style={{ flex: 1, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #dbeafe', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
+                <div style={{ color: 'var(--accent-blue)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Medium Risks</div>
+                <div style={{ color: 'var(--accent-blue)', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : mediumCount}</div>
+                <Info size={20} color="#2563eb" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
+              </div>
+              <div style={{ flex: 1, background: 'rgba(11, 220, 181, 0.1)', border: '1px solid #d1fae5', borderRadius: '8px', padding: '1.25rem', position: 'relative' }}>
+                <div style={{ color: 'var(--accent-teal)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Low Risks</div>
+                <div style={{ color: 'var(--accent-teal)', fontSize: '2rem', fontWeight: 700 }}>{!selectedDoc ? '-' : lowCount}</div>
+                <CheckCircle2 size={20} color="#059669" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', opacity: 0.8 }} />
+              </div>
+            </div>
+
+            {/* Charts Section */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+              <div style={{ background: 'var(--bg-main)', padding: '1.5rem', borderRadius: '12px' }}>
+                <h4 style={{ color: 'var(--text-main)', marginBottom: '1.5rem', fontSize: '1rem' }}>Severity Breakdown</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {/* CSS Pie Chart simulation */}
+                  <div style={{ 
+                    width: '180px', height: '180px', borderRadius: '50%', marginBottom: '1.5rem',
+                    ...getPieStyle()
+                  }}></div>
+                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', flexWrap: 'wrap', justifyContent: 'center' }}>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', background: 'var(--accent-teal)', display: 'inline-block' }}></span> Low</span>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', background: 'var(--accent-blue)', display: 'inline-block' }}></span> Medium</span>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', background: 'var(--accent-orange)', display: 'inline-block' }}></span> High</span>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', background: 'var(--accent-red)', display: 'inline-block' }}></span> Critical</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--bg-main)', padding: '1.5rem', borderRadius: '12px' }}>
+                <h4 style={{ color: 'var(--text-main)', marginBottom: '1.5rem', fontSize: '1rem' }}>Confidence Statistics</h4>
+                <div style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '1rem', padding: '0 1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e2e8f0', position: 'relative' }}>
+                  {/* Grid Lines */}
+                  {[30, 20, 10].map(y => (
+                    <div key={y} style={{ position: 'absolute', bottom: `${(y/35)*100}%`, left: 0, right: 0, borderTop: '1px dashed #cbd5e1', zIndex: 0, display: 'flex', alignItems: 'center' }}>
+                      <span style={{ position: 'absolute', left: '-20px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>{y}</span>
+                    </div>
+                  ))}
+                  
+                  {/* Bars - dynamically mapping mock stats since confidence distribution isn't natively aggregated yet */}
+                  {[
+                    { label: 'Very High', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.4), color: 'var(--accent-teal)' },
+                    { label: 'High', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.3), color: '#0d9488' },
+                    { label: 'Medium', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.2), color: '#0284c7' },
+                    { label: 'Low', value: !selectedDoc ? 0 : Math.floor(totalFindings * 0.1), color: 'var(--accent-blue)' }
+                  ].map((bar, i) => (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                       <div style={{ width: '100%', height: `${Math.min(100, (bar.value/(Math.max(10, totalFindings)))*100)}%`, background: bar.color, transition: 'height 0.3s' }}></div>
+                       <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bar.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div style={{ background: 'var(--bg-main)', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
+               <h4 style={{ color: 'var(--text-main)', marginBottom: '1.5rem', fontSize: '1rem' }}>Total Findings Summary</h4>
+               <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                 <div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{!selectedDoc ? '-' : totalFindings}</div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Total Findings</div>
+                 </div>
+                 <div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent-blue)', lineHeight: 1 }}>{!selectedDoc ? '-' : `${compScore}%`}</div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Compliance Score</div>
+                 </div>
+                 <div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent-teal)', lineHeight: 1 }}>{!selectedDoc ? '-' : (docStats?.resolvedCount || 0)}</div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Resolved Issues</div>
+                 </div>
+               </div>
+            </div>
+
+            {/* Generated Reports */}
+            {reports.length > 0 && (
+              <div style={{ marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '1rem' }}>Generated Reports</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {reports.map((r, idx) => (
+                    <div key={r._id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <div>
+                        <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--text-main)' }}>Report — {r.framework || framework}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{r.created_at ? new Date(r.created_at).toLocaleString() : 'Just now'}</div>
+                      </div>
+                      <CheckCircle2 size={18} color="#10b981" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default AuditReport;

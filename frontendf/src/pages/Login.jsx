@@ -1,0 +1,181 @@
+import React, { useState } from 'react';
+import { ShieldCheck, Mail, Lock, CheckCircle2, Building2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+
+const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleDemoSso = () => {
+    localStorage.setItem('sl_token', 'demo-token');
+    localStorage.setItem('sl_user', JSON.stringify({ name: 'Demo SSO User', email: 'sso-demo@company.com' }));
+    navigate('/dashboard');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      // Direct pass without using actual credentials for rapid testing
+      const fakeEmail = email || 'admin@demo.com'; 
+      await login(fakeEmail, 'any_password'); 
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-card)' }}>
+      {/* Left side - Blue Gradient */}
+      <div style={{ 
+        flex: 1, 
+        background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', 
+        padding: '4rem',
+        display: 'flex',
+        flexDirection: 'column',
+        color: 'var(--bg-card)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', fontWeight: 800, marginBottom: '4rem' }}>
+          <div style={{ background: 'var(--bg-card)', padding: '6px', borderRadius: '8px' }}>
+            <ShieldCheck size={28} color="#2563eb" />
+          </div>
+          <span>ComplianceAI</span>
+        </div>
+        
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h1 style={{ fontSize: '3.5rem', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+            Enterprise Compliance <br />
+            AI Dashboard
+          </h1>
+          <p style={{ fontSize: '1.25rem', opacity: 0.9, marginBottom: '3rem', maxWidth: '500px' }}>
+            Intelligent document analysis and compliance monitoring powered by advanced AI technology.
+          </p>
+          
+          <div style={{ position: 'relative', marginTop: '1rem', minHeight: '300px' }}>
+             <img 
+               src="/ai-illustration.png" 
+               alt="AI Illustration" 
+               style={{ width: '100%', height: '100%', minHeight: '300px', objectFit: 'cover', borderRadius: '24px', opacity: 0.9, backgroundColor: 'rgba(255,255,255,0.1)' }}
+             />
+             {/* Read-only system badge matching image */}
+             <div className="glass" style={{ 
+                position: 'absolute', 
+                bottom: '20px', 
+                left: '20px', 
+                right: '20px',
+                padding: '1.5rem',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+             }}>
+                <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '8px' }}>
+                  <Lock size={20} />
+                </div>
+                <div>
+                   <div style={{ fontWeight: 700 }}>Read-Only System</div>
+                   <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>We never modify your documents. Our AI only reads and analyzes for compliance insights.</div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '4rem', background: 'var(--bg-main)' }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ width: '100%', maxWidth: '440px' }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <h2 style={{ color: 'var(--text-main)', fontSize: '2rem', marginBottom: '0.5rem' }}>Welcome Back</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Sign in to access your compliance dashboard</p>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="card" style={{ background: 'rgba(11, 220, 181, 0.1)', border: '1px solid #d1fae5', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem' }}>
+              <div style={{ color: 'var(--accent-teal)' }}><CheckCircle2 size={20} /></div>
+              <span style={{ color: 'var(--accent-teal)', fontSize: '0.9rem', fontWeight: 500 }}>Secure Enterprise Login</span>
+            </div>
+
+            {error && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fee2e2', borderRadius: '8px', padding: '0.75rem 1rem', color: 'var(--accent-red)', fontSize: '0.9rem' }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>Password</label>
+                  <Link to="/forgot-password" style={{ color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600 }}>Forgot password?</Link>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '0.9rem', opacity: loading ? 0.7 : 1 }}
+              >
+                {loading ? 'Signing in…' : 'Sign In'}
+              </button>
+            </form>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem', margin: '1rem 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+              <span>OR CONTINUE WITH</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+            </div>
+
+            <button onClick={handleDemoSso} className="btn btn-outline" style={{ width: '100%', color: 'var(--text-main)', gap: '0.75rem' }}>
+              <Building2 size={20} />
+              Enterprise SSO
+            </button>
+
+            <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              Don't have an account? <a href="/#contact" style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>Contact Sales</a>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;

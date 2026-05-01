@@ -1,0 +1,75 @@
+import React, { useState } from 'react';
+import { Key, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+const ForgotPassword = () => {
+  const [email, setEmail] = useState('');
+  const [notice, setNotice] = useState('');
+
+  const handleSendReset = () => {
+    if (!email.trim()) {
+      setNotice('Please enter your email first.');
+      return;
+    }
+    setNotice(`Reset link sent to ${email} (demo mode).`);
+  };
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-main)', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ width: '100%', maxWidth: '480px' }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="card"
+          style={{ background: 'var(--bg-card)', padding: '3rem 2rem', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)' }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{ background: 'var(--bg-card)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <Key size={32} color="#2563eb" />
+            </div>
+            <h1 style={{ color: 'var(--text-main)', fontSize: '1.75rem', marginBottom: '0.5rem' }}>Forgot Password?</h1>
+            <p style={{ color: 'var(--text-muted)' }}>No worries, we'll send you reset instructions.</p>
+          </div>
+
+          <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>Email address</label>
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none' }}
+              />
+            </div>
+
+            <button type="button" onClick={handleSendReset} className="btn btn-secondary" style={{ width: '100%', padding: '0.9rem' }}>
+              Send Reset Link
+            </button>
+
+            {notice && (
+              <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.75rem 1rem', color: 'var(--accent-blue)', fontSize: '0.9rem' }}>
+                {notice}
+              </div>
+            )}
+          </form>
+
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <Link to="/login" style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, textDecoration: 'none' }}>
+              <ArrowLeft size={16} /> Back to Login
+            </Link>
+          </div>
+        </motion.div>
+
+        <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          Protected by reCAPTCHA and subject to the <br />
+          <a href="https://example.com/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>Privacy Policy</a> and <a href="https://example.com/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>Terms of Service</a>.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ForgotPassword;

@@ -1,0 +1,202 @@
+[
+  {
+    "rule_id": "gdpr_1",
+    "framework": "GDPR",
+    "category": "User Consent",
+    "description": "Personal data must not be collected without clear user consent.",
+    "keywords": ["data", "consent", "collection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_2",
+    "framework": "GDPR",
+    "category": "Data Privacy",
+    "description": "Personal data must be processed only for lawful purposes.",
+    "keywords": ["data", "processing", "lawful"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_3",
+    "framework": "GDPR",
+    "category": "Data Sharing",
+    "description": "Personal data must not be shared with third parties without consent.",
+    "keywords": ["data", "sharing", "third-party", "consent"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_4",
+    "framework": "GDPR",
+    "category": "User Rights",
+    "description": "Users must have the right to access their personal data.",
+    "keywords": ["user", "access", "data"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_5",
+    "framework": "GDPR",
+    "category": "User Rights",
+    "description": "Users must have the right to correct inaccurate personal data.",
+    "keywords": ["user", "correct", "data"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_6",
+    "framework": "GDPR",
+    "category": "User Rights",
+    "description": "Users must have the right to delete their personal data.",
+    "keywords": ["user", "delete", "data"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_7",
+    "framework": "GDPR",
+    "category": "Data Retention",
+    "description": "Personal data must not be stored longer than necessary.",
+    "keywords": ["data", "storage", "retention"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_8",
+    "framework": "GDPR",
+    "category": "Security",
+    "description": "Personal data must be protected with appropriate security measures.",
+    "keywords": ["data", "security", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_9",
+    "framework": "GDPR",
+    "category": "Data Privacy",
+    "description": "Only necessary personal data should be collected.",
+    "keywords": ["data", "collection", "necessary"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_10",
+    "framework": "GDPR",
+    "category": "User Consent",
+    "description": "Consent must be freely given and clearly stated.",
+    "keywords": ["consent", "user", "clear"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_11",
+    "framework": "GDPR",
+    "category": "User Consent",
+    "description": "Users must be able to withdraw consent easily.",
+    "keywords": ["user", "withdraw", "consent"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_12",
+    "framework": "GDPR",
+    "category": "Data Sharing",
+    "description": "Data transfers outside regions must ensure adequate protection.",
+    "keywords": ["data", "transfer", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_13",
+    "framework": "GDPR",
+    "category": "Security",
+    "description": "Data breaches must be reported without delay.",
+    "keywords": ["data", "breach", "report"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_14",
+    "framework": "GDPR",
+    "category": "Data Privacy",
+    "description": "Personal data must be accurate and kept up to date.",
+    "keywords": ["data", "accuracy", "update"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_15",
+    "framework": "GDPR",
+    "category": "User Rights",
+    "description": "Users must have the right to restrict data processing.",
+    "keywords": ["user", "restrict", "processing"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_16",
+    "framework": "GDPR",
+    "category": "User Rights",
+    "description": "Users must have the right to data portability.",
+    "keywords": ["user", "data", "portability"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_17",
+    "framework": "GDPR",
+    "category": "Data Privacy",
+    "description": "Personal data must be processed transparently.",
+    "keywords": ["data", "processing", "transparency"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_18",
+    "framework": "GDPR",
+    "category": "Security",
+    "description": "Access to personal data must be restricted to authorized users.",
+    "keywords": ["data", "access", "authorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_19",
+    "framework": "GDPR",
+    "category": "Data Sharing",
+    "description": "Third parties must follow data protection obligations.",
+    "keywords": ["third-party", "data", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_20",
+    "framework": "GDPR",
+    "category": "Data Retention",
+    "description": "Data retention periods must be clearly defined.",
+    "keywords": ["data", "retention", "period"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_21",
+    "framework": "GDPR",
+    "category": "User Consent",
+    "description": "Consent requests must be specific and informed.",
+    "keywords": ["consent", "specific", "informed"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_22",
+    "framework": "GDPR",
+    "category": "Security",
+    "description": "Systems must ensure confidentiality and integrity of data.",
+    "keywords": ["data", "confidentiality", "integrity"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_23",
+    "framework": "GDPR",
+    "category": "Data Privacy",
+    "description": "Personal data must not be used beyond its intended purpose.",
+    "keywords": ["data", "purpose", "usage"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "gdpr_24",
+    "framework": "GDPR",
+    "category": "User Rights",
+    "description": "Users must be informed about how their data is used.",
+    "keywords": ["user", "data", "usage", "information"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "gdpr_25",
+    "framework": "GDPR",
+    "category": "Security",
+    "description": "Encryption should be used to protect sensitive personal data.",
+    "keywords": ["data", "encryption", "security"],
+    "severity": "High"
+  }
+]

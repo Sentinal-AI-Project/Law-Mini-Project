@@ -1,0 +1,202 @@
+[
+  {
+    "rule_id": "ISO_1",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Access to information systems must be restricted to authorized users.",
+    "keywords": ["access", "systems", "authorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_2",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "User authentication must be required before accessing sensitive data.",
+    "keywords": ["authentication", "user", "data"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_3",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Information assets must be classified and protected accordingly.",
+    "keywords": ["information", "assets", "classification"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_4",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Security incidents must be reported and managed promptly.",
+    "keywords": ["incident", "security", "report"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_5",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Data must be protected from unauthorized access and disclosure.",
+    "keywords": ["data", "protection", "unauthorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_6",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Encryption must be used to protect sensitive information.",
+    "keywords": ["encryption", "data", "security"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_7",
+    "framework": "ISO",
+    "category": "Data Retention",
+    "description": "Information must be retained only for a defined period.",
+    "keywords": ["information", "retention", "period"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_8",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Access rights must be reviewed regularly.",
+    "keywords": ["access", "rights", "review"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_9",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "System activities must be logged and monitored.",
+    "keywords": ["logging", "monitoring", "system"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_10",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Backup procedures must ensure data recovery.",
+    "keywords": ["backup", "data", "recovery"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_11",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Network security controls must be implemented.",
+    "keywords": ["network", "security", "controls"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_12",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Risk assessments must be conducted regularly.",
+    "keywords": ["risk", "assessment", "security"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_13",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "System changes must be approved and documented.",
+    "keywords": ["system", "change", "approval"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_14",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Confidential information must be handled securely.",
+    "keywords": ["confidential", "information", "security"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_15",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Security policies must be defined and enforced.",
+    "keywords": ["security", "policy", "enforcement"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_16",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Access must be revoked when no longer required.",
+    "keywords": ["access", "revocation", "user"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_17",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Physical access to systems must be controlled.",
+    "keywords": ["physical", "access", "control"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_18",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Systems must be protected against malware and threats.",
+    "keywords": ["system", "malware", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_19",
+    "framework": "ISO",
+    "category": "Data Sharing",
+    "description": "Information sharing must follow security policies.",
+    "keywords": ["information", "sharing", "policy"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_20",
+    "framework": "ISO",
+    "category": "Data Privacy",
+    "description": "Sensitive data must be protected during processing.",
+    "keywords": ["data", "processing", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_21",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Monitoring systems must detect unusual activities.",
+    "keywords": ["monitoring", "activity", "detection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "ISO_22",
+    "framework": "ISO",
+    "category": "Data Retention",
+    "description": "Data disposal must be secure and documented.",
+    "keywords": ["data", "disposal", "secure"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_23",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Systems must ensure availability through redundancy.",
+    "keywords": ["system", "availability", "redundancy"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_24",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Access logs must be maintained for auditing purposes.",
+    "keywords": ["logs", "access", "audit"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "ISO_25",
+    "framework": "ISO",
+    "category": "Security",
+    "description": "Information security training must be provided to employees.",
+    "keywords": ["security", "training", "employees"],
+    "severity": "Medium"
+  }
+]

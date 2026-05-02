@@ -28,7 +28,7 @@ const Register = () => {
     };
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
+        <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-main)', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -36,24 +36,24 @@ const Register = () => {
                 style={{ width: '100%', maxWidth: '440px', padding: '3rem' }}
             >
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-                    <div style={{ display: 'inline-flex', background: '#2563eb', padding: '10px', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'inline-flex', background: 'var(--accent-blue)', padding: '10px', borderRadius: '12px', marginBottom: '1.5rem' }}>
                         <ShieldCheck size={32} color="#fff" />
                     </div>
-                    <h2 style={{ fontSize: '2rem', color: '#1e293b' }}>Create Account</h2>
-                    <p style={{ color: '#64748b' }}>Start automated compliance monitoring</p>
+                    <h2 style={{ fontSize: '2rem', color: 'var(--text-main)' }}>Create Account</h2>
+                    <p style={{ color: 'var(--text-muted)' }}>Start automated compliance monitoring</p>
                 </div>
 
                 {error && (
-                    <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '1rem', color: '#dc2626', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fee2e2', borderRadius: '8px', padding: '1rem', color: 'var(--accent-red)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: 600 }}>Full Name</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Full Name</label>
                         <div style={{ position: 'relative' }}>
-                            <User size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                            <User size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
                                 type="text"
                                 placeholder="Your full name"
@@ -66,9 +66,9 @@ const Register = () => {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: 600 }}>Email Address</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Email Address</label>
                         <div style={{ position: 'relative' }}>
-                            <Mail size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                            <Mail size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
                                 type="email"
                                 placeholder="name@company.com"
@@ -81,9 +81,9 @@ const Register = () => {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: 600 }}>Password</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Password</label>
                         <div style={{ position: 'relative' }}>
-                            <Lock size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                            <Lock size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
                                 type="password"
                                 placeholder="Min. 6 characters"
@@ -106,8 +106,8 @@ const Register = () => {
                     </button>
                 </form>
 
-                <div style={{ textAlign: 'center', marginTop: '2rem', color: '#64748b' }}>
-                    Already have an account? <Link to="/login" style={{ color: '#2563eb', fontWeight: 600 }}>Sign in</Link>
+                <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-muted)' }}>
+                    Already have an account? <Link to="/login" style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>Sign in</Link>
                 </div>
             </motion.div>
         </div>

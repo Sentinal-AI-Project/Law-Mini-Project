@@ -124,7 +124,7 @@ const DashboardLayout = ({ children }) => {
                 border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 padding: '0.6rem 1rem 0.6rem 2.5rem',
-                color: '#fff',
+                color: 'var(--bg-card)',
                 fontSize: '0.9rem'
               }}
             />

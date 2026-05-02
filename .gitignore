@@ -1,3 +1,11 @@
+
+venv/
+__pycache__/
+*.pyc
+.env
+reports/
+*.pdf
+
 node_modules/
 uploads/
 .env

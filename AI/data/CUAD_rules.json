@@ -1,0 +1,402 @@
+[
+  {
+    "rule_id": "cuad_1",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "Confidential information shall not be disclosed by the receiving party to any third party without the prior written consent of the disclosing party during the term of this Agreement and for a period of five (5) years thereafter.",
+    "keywords": ["confidential information", "disclosure", "third party", "written consent", "term"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_2",
+    "framework": "CUAD",
+    "category": "Payment Terms",
+    "description": "The service provider shall issue invoices on a monthly basis, and the client agrees to remit payment within thirty (30) days of the invoice date, failing which a late fee of 1.5% per month shall be applied to the outstanding balance.",
+    "keywords": ["invoice", "payment", "late fee", "outstanding balance", "monthly"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_3",
+    "framework": "CUAD",
+    "category": "Liability",
+    "description": "In no event shall either party be liable to the other for any indirect, incidental, consequential, special, or exemplary damages arising out of or related to this Agreement, even if such party has been advised of the possibility of such damages.",
+    "keywords": ["indirect damages", "consequential damages", "liability", "exemplary damages", "limitation"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_4",
+    "framework": "CUAD",
+    "category": "Termination",
+    "description": "Either party may terminate this Agreement upon thirty (30) days prior written notice to the other party in the event of a material breach that remains uncured within fifteen (15) days of receipt of written notice of such breach.",
+    "keywords": ["termination", "material breach", "written notice", "cure period", "prior notice"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_5",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "The service provider shall not use, sell, rent, transfer, or otherwise disclose any personal data collected under this Agreement for any purpose other than the performance of the services expressly described herein.",
+    "keywords": ["personal data", "data usage", "disclosure", "services", "collection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_6",
+    "framework": "CUAD",
+    "category": "Intellectual Property",
+    "description": "All work product, inventions, and deliverables created by the service provider in the performance of services under this Agreement shall be considered works made for hire and shall vest exclusively in the client upon full payment.",
+    "keywords": ["work product", "intellectual property", "works made for hire", "deliverables", "ownership"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_7",
+    "framework": "CUAD",
+    "category": "Indemnity",
+    "description": "The service provider shall indemnify, defend, and hold harmless the client and its officers, directors, and employees from and against any claims, damages, losses, and expenses arising from the service provider's negligence or willful misconduct.",
+    "keywords": ["indemnify", "hold harmless", "negligence", "willful misconduct", "defend"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_8",
+    "framework": "CUAD",
+    "category": "Dispute Resolution",
+    "description": "Any dispute arising out of or relating to this Agreement shall be resolved through binding arbitration administered by the American Arbitration Association in accordance with its Commercial Arbitration Rules.",
+    "keywords": ["arbitration", "dispute resolution", "binding", "AAA", "commercial rules"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_9",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "The receiving party agrees to use the confidential information solely for the purposes of evaluating or performing its obligations under this Agreement and shall apply no less than reasonable care to protect such information from unauthorized access.",
+    "keywords": ["confidential information", "unauthorized access", "reasonable care", "obligations", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_10",
+    "framework": "CUAD",
+    "category": "Payment Terms",
+    "description": "The parties agree that all fees and charges payable under this Agreement are exclusive of applicable taxes, and the client shall be solely responsible for the payment of all sales, use, and value-added taxes imposed by any governmental authority.",
+    "keywords": ["fees", "taxes", "value-added tax", "governmental authority", "charges"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_11",
+    "framework": "CUAD",
+    "category": "Liability",
+    "description": "The aggregate liability of the service provider under or in connection with this Agreement shall not exceed the total fees paid by the client in the twelve (12) months immediately preceding the event giving rise to the claim.",
+    "keywords": ["aggregate liability", "cap", "total fees", "claim", "limitation of liability"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_12",
+    "framework": "CUAD",
+    "category": "Termination",
+    "description": "Upon termination or expiration of this Agreement for any reason, the service provider shall promptly return or destroy all confidential information of the client and certify such destruction in writing within ten (10) business days.",
+    "keywords": ["termination", "confidential information", "destruction", "return", "certification"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_13",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "The service provider shall implement and maintain commercially reasonable technical and organizational measures to protect personal data against unauthorized access, loss, destruction, or alteration in accordance with applicable data protection laws.",
+    "keywords": ["technical measures", "personal data", "data protection", "security", "unauthorized access"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_14",
+    "framework": "CUAD",
+    "category": "Intellectual Property",
+    "description": "Each party shall retain exclusive ownership of its pre-existing intellectual property, and nothing in this Agreement shall be construed as granting any license or right thereto except as expressly set forth herein.",
+    "keywords": ["pre-existing IP", "ownership", "license", "intellectual property", "rights"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_15",
+    "framework": "CUAD",
+    "category": "Indemnity",
+    "description": "The client shall indemnify the service provider against any third-party claims arising from the client's misuse of the deliverables or breach of any representation or warranty made by the client under this Agreement.",
+    "keywords": ["indemnity", "third-party claims", "misuse", "breach", "warranty"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_16",
+    "framework": "CUAD",
+    "category": "Dispute Resolution",
+    "description": "Prior to commencing any arbitration or litigation, the parties agree to submit the dispute to non-binding mediation before a mutually agreed mediator for a period of not less than thirty (30) days.",
+    "keywords": ["mediation", "non-binding", "arbitration", "litigation", "dispute"],
+    "severity": "Low"
+  },
+  {
+    "rule_id": "cuad_17",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "The confidentiality obligations set forth in this Agreement shall not apply to information that is or becomes publicly available through no act or omission of the receiving party, or that was rightfully known to the receiving party prior to disclosure.",
+    "keywords": ["confidentiality", "publicly available", "prior knowledge", "omission", "exclusion"],
+    "severity": "Low"
+  },
+  {
+    "rule_id": "cuad_18",
+    "framework": "CUAD",
+    "category": "Payment Terms",
+    "description": "The service provider reserves the right to suspend the performance of services if any undisputed invoice remains unpaid for more than sixty (60) days, without prejudice to any other remedy available under this Agreement or applicable law.",
+    "keywords": ["suspension", "services", "unpaid invoice", "remedy", "undisputed"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_19",
+    "framework": "CUAD",
+    "category": "Liability",
+    "description": "Nothing in this Agreement shall limit or exclude either party's liability for fraud, fraudulent misrepresentation, death, or personal injury caused by that party's gross negligence or willful misconduct.",
+    "keywords": ["fraud", "gross negligence", "personal injury", "willful misconduct", "liability exclusion"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_20",
+    "framework": "CUAD",
+    "category": "Termination",
+    "description": "The client may terminate this Agreement for convenience upon sixty (60) days written notice, provided that the client shall pay all fees accrued up to the effective date of termination plus any non-cancellable costs already committed by the service provider.",
+    "keywords": ["termination for convenience", "written notice", "fees", "non-cancellable costs", "effective date"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_21",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "In the event of a personal data breach, the service provider shall notify the client without undue delay and in any event within seventy-two (72) hours of becoming aware of such breach, providing full details of the nature and scope of the incident.",
+    "keywords": ["data breach", "notification", "72 hours", "personal data", "incident"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_22",
+    "framework": "CUAD",
+    "category": "Intellectual Property",
+    "description": "The service provider hereby grants to the client a non-exclusive, royalty-free, worldwide license to use, reproduce, and distribute the deliverables solely for the client's internal business purposes.",
+    "keywords": ["license", "non-exclusive", "royalty-free", "deliverables", "internal use"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_23",
+    "framework": "CUAD",
+    "category": "Indemnity",
+    "description": "The service provider shall indemnify the client against any claims alleging that the deliverables, as provided and used in accordance with this Agreement, infringe any third party's intellectual property rights.",
+    "keywords": ["indemnity", "infringement", "intellectual property", "third party", "deliverables"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_24",
+    "framework": "CUAD",
+    "category": "Dispute Resolution",
+    "description": "The parties agree that any arbitration conducted pursuant to this Agreement shall be held in the English language in New York, New York, and the decision of the arbitrator shall be final, binding, and enforceable in any court of competent jurisdiction.",
+    "keywords": ["arbitration", "final decision", "enforceable", "jurisdiction", "binding"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_25",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "Each party's employees, contractors, and agents who are granted access to the other party's confidential information shall be bound by written confidentiality obligations no less restrictive than those contained in this Agreement.",
+    "keywords": ["employees", "contractors", "confidentiality obligations", "access", "written agreement"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_26",
+    "framework": "CUAD",
+    "category": "Payment Terms",
+    "description": "The parties agree that any disputed invoice amount shall be escalated to the designated account managers of both parties within five (5) business days, and undisputed amounts shall remain payable by the original due date.",
+    "keywords": ["disputed invoice", "account manager", "undisputed amount", "escalation", "due date"],
+    "severity": "Low"
+  },
+  {
+    "rule_id": "cuad_27",
+    "framework": "CUAD",
+    "category": "Liability",
+    "description": "The service provider makes no representation or warranty, express or implied, regarding the fitness for a particular purpose, merchantability, or non-infringement of any deliverable provided under this Agreement.",
+    "keywords": ["warranty disclaimer", "merchantability", "fitness for purpose", "non-infringement", "representation"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_28",
+    "framework": "CUAD",
+    "category": "Termination",
+    "description": "In the event of termination due to the client's insolvency, bankruptcy, or assignment for the benefit of creditors, all outstanding fees shall become immediately due and payable without any requirement for further notice.",
+    "keywords": ["insolvency", "bankruptcy", "outstanding fees", "termination", "immediate payment"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_29",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "The service provider shall process personal data only on documented instructions from the client and shall not transfer such data to any jurisdiction outside the European Economic Area without the client's prior written approval.",
+    "keywords": ["data processing", "documented instructions", "EEA", "data transfer", "personal data"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_30",
+    "framework": "CUAD",
+    "category": "Intellectual Property",
+    "description": "The client shall not reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code of any proprietary software or tools provided by the service provider under this Agreement.",
+    "keywords": ["reverse engineering", "decompilation", "source code", "proprietary software", "restriction"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_31",
+    "framework": "CUAD",
+    "category": "Indemnity",
+    "description": "As a condition of any indemnification claim under this Agreement, the indemnified party shall promptly notify the indemnifying party in writing, grant sole control of the defense, and provide all reasonable cooperation and assistance.",
+    "keywords": ["indemnification", "defense", "notice", "cooperation", "sole control"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_32",
+    "framework": "CUAD",
+    "category": "Dispute Resolution",
+    "description": "Notwithstanding any agreement to arbitrate, either party may seek interim or provisional injunctive relief from a court of competent jurisdiction to prevent irreparable harm pending the outcome of arbitration proceedings.",
+    "keywords": ["injunctive relief", "irreparable harm", "arbitration", "provisional remedy", "court"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_33",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "The receiving party shall promptly notify the disclosing party upon becoming aware of any actual or suspected unauthorized disclosure of confidential information and shall cooperate fully in mitigating the effects of such disclosure.",
+    "keywords": ["unauthorized disclosure", "notification", "mitigation", "confidential information", "cooperation"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_34",
+    "framework": "CUAD",
+    "category": "Payment Terms",
+    "description": "All fees payable under this Agreement shall be made in United States dollars by wire transfer to the account designated by the service provider, and any currency conversion costs shall be borne solely by the client.",
+    "keywords": ["fees", "wire transfer", "USD", "currency conversion", "payment method"],
+    "severity": "Low"
+  },
+  {
+    "rule_id": "cuad_35",
+    "framework": "CUAD",
+    "category": "Liability",
+    "description": "The service provider shall not be liable for any failure or delay in performance of its obligations under this Agreement to the extent such failure or delay is caused by a force majeure event beyond the service provider's reasonable control.",
+    "keywords": ["force majeure", "delay", "performance failure", "reasonable control", "liability"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_36",
+    "framework": "CUAD",
+    "category": "Termination",
+    "description": "The provisions of this Agreement relating to confidentiality, intellectual property, indemnification, and limitation of liability shall survive the expiration or termination of this Agreement for any reason.",
+    "keywords": ["survival", "termination", "confidentiality", "indemnification", "intellectual property"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_37",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "The service provider shall, at the client's written request and upon termination of this Agreement, securely delete or return all personal data held on behalf of the client within thirty (30) days.",
+    "keywords": ["data deletion", "return", "personal data", "termination", "secure"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_38",
+    "framework": "CUAD",
+    "category": "Intellectual Property",
+    "description": "Any feedback, suggestions, or ideas provided by the client regarding the service provider's products or services shall be deemed non-confidential, and the service provider shall be free to use such feedback without restriction or compensation.",
+    "keywords": ["feedback", "suggestions", "non-confidential", "intellectual property", "compensation"],
+    "severity": "Low"
+  },
+  {
+    "rule_id": "cuad_39",
+    "framework": "CUAD",
+    "category": "Indemnity",
+    "description": "Neither party's indemnification obligations under this Agreement shall extend to claims arising from the indemnified party's own negligence, bad faith, fraud, or material breach of its obligations hereunder.",
+    "keywords": ["indemnification", "exclusions", "negligence", "bad faith", "material breach"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_40",
+    "framework": "CUAD",
+    "category": "Dispute Resolution",
+    "description": "This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict of law principles, and the parties irrevocably consent to exclusive jurisdiction in the state and federal courts located therein.",
+    "keywords": ["governing law", "Delaware", "jurisdiction", "conflict of law", "courts"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_41",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "The parties agree that a breach of the confidentiality provisions herein would cause irreparable injury for which monetary damages would be an inadequate remedy, and therefore the non-breaching party shall be entitled to seek equitable relief.",
+    "keywords": ["breach", "irreparable injury", "equitable relief", "confidentiality", "monetary damages"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_42",
+    "framework": "CUAD",
+    "category": "Payment Terms",
+    "description": "The service provider may adjust its pricing on an annual basis upon sixty (60) days prior written notice to the client, provided that such adjustment shall not exceed five percent (5%) above the consumer price index for the preceding year.",
+    "keywords": ["price adjustment", "CPI", "annual increase", "written notice", "pricing"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_43",
+    "framework": "CUAD",
+    "category": "Liability",
+    "description": "Each party represents and warrants that it has the full legal authority to enter into and perform its obligations under this Agreement and that doing so will not violate any applicable law, regulation, or agreement with a third party.",
+    "keywords": ["representation", "warranty", "legal authority", "obligations", "violation"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_44",
+    "framework": "CUAD",
+    "category": "Termination",
+    "description": "The service provider may immediately suspend or terminate services without notice if the client engages in any activity that, in the service provider's reasonable determination, poses a security threat or violates applicable law.",
+    "keywords": ["immediate termination", "suspension", "security threat", "applicable law", "without notice"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_45",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "The service provider shall permit the client or its designated auditor to conduct audits of the service provider's data processing activities upon reasonable prior written notice, no more than once per calendar year.",
+    "keywords": ["audit", "data processing", "written notice", "auditor", "calendar year"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_46",
+    "framework": "CUAD",
+    "category": "Intellectual Property",
+    "description": "The client shall not use the service provider's name, logo, trademarks, or other identifying marks in any marketing, press release, or public announcement without the service provider's express prior written consent.",
+    "keywords": ["trademark", "logo", "marketing", "prior written consent", "identifying marks"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_47",
+    "framework": "CUAD",
+    "category": "Indemnity",
+    "description": "The maximum aggregate liability of any indemnifying party under the indemnification provisions of this Agreement shall not exceed the greater of one million dollars ($1,000,000) or the total fees paid in the prior twelve months.",
+    "keywords": ["indemnification cap", "aggregate liability", "maximum", "total fees", "limitation"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "cuad_48",
+    "framework": "CUAD",
+    "category": "Dispute Resolution",
+    "description": "In any arbitration or litigation arising from this Agreement, the prevailing party shall be entitled to recover its reasonable attorneys' fees, court costs, and other litigation expenses from the non-prevailing party.",
+    "keywords": ["attorneys' fees", "prevailing party", "litigation costs", "arbitration", "recovery"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_49",
+    "framework": "CUAD",
+    "category": "Confidentiality",
+    "description": "Notwithstanding any other provision of this Agreement, either party may disclose confidential information to the extent required by applicable law, regulation, or court order, provided that it gives the disclosing party maximum possible prior notice to contest such disclosure.",
+    "keywords": ["court order", "compelled disclosure", "regulation", "prior notice", "confidentiality"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "cuad_50",
+    "framework": "CUAD",
+    "category": "Data Usage",
+    "description": "The service provider shall ensure that any sub-processor engaged to process personal data on behalf of the client is bound by data protection obligations equivalent to those imposed on the service provider under this Agreement.",
+    "keywords": ["sub-processor", "data protection", "personal data", "obligations", "equivalent"],
+    "severity": "High"
+  }
+]

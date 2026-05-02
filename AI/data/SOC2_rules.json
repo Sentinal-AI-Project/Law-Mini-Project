@@ -1,0 +1,202 @@
+[
+  {
+    "rule_id": "SOC_1",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Access to systems must be restricted to authorized users only.",
+    "keywords": ["access", "systems", "authorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_2",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "User authentication must be required before accessing sensitive data.",
+    "keywords": ["authentication", "user", "data"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_3",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "All system activities must be logged and monitored regularly.",
+    "keywords": ["logging", "monitoring", "system"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_4",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Security incidents must be detected and responded to promptly.",
+    "keywords": ["incident", "security", "response"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_5",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Data must be protected from unauthorized access at all times.",
+    "keywords": ["data", "protection", "unauthorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_6",
+    "framework": "SOC2",
+    "category": "Data Retention",
+    "description": "Data must be retained only for a defined and necessary period.",
+    "keywords": ["data", "retention", "period"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "SOC_7",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Encryption must be used to protect sensitive information.",
+    "keywords": ["encryption", "data", "security"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_8",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "System configurations must be regularly reviewed and updated.",
+    "keywords": ["system", "configuration", "review"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "SOC_9",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Access rights must be reviewed periodically.",
+    "keywords": ["access", "rights", "review"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_10",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Unauthorized access attempts must be detected and logged.",
+    "keywords": ["unauthorized", "access", "logging"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_11",
+    "framework": "SOC2",
+    "category": "Data Sharing",
+    "description": "Data sharing with third parties must follow security controls.",
+    "keywords": ["data", "sharing", "third-party"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_12",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Systems must be protected against malware and threats.",
+    "keywords": ["system", "malware", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_13",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Regular risk assessments must be conducted.",
+    "keywords": ["risk", "assessment", "security"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_14",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Backup and recovery procedures must be in place.",
+    "keywords": ["backup", "recovery", "data"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_15",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "System changes must be approved and documented.",
+    "keywords": ["system", "change", "approval"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "SOC_16",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Confidential data must be classified and handled securely.",
+    "keywords": ["confidential", "data", "classification"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_17",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Access to systems must require strong password policies.",
+    "keywords": ["password", "security", "access"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_18",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Security policies must be defined and communicated.",
+    "keywords": ["security", "policy", "communication"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "SOC_19",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Employee access must be removed after termination.",
+    "keywords": ["employee", "access", "termination"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_20",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Network security controls must be implemented.",
+    "keywords": ["network", "security", "controls"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_21",
+    "framework": "SOC2",
+    "category": "Data Privacy",
+    "description": "Sensitive data must be protected during processing.",
+    "keywords": ["data", "processing", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_22",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Monitoring systems must detect unusual activities.",
+    "keywords": ["monitoring", "activity", "detection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "SOC_23",
+    "framework": "SOC2",
+    "category": "Data Retention",
+    "description": "Data disposal must be secure and documented.",
+    "keywords": ["data", "disposal", "secure"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "SOC_24",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "System availability must be ensured through redundancy.",
+    "keywords": ["availability", "system", "redundancy"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "SOC_25",
+    "framework": "SOC2",
+    "category": "Security",
+    "description": "Access logs must be maintained for audit purposes.",
+    "keywords": ["logs", "access", "audit"],
+    "severity": "Medium"
+  }
+]

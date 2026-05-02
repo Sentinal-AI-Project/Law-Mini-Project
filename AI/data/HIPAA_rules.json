@@ -1,0 +1,202 @@
+[
+  {
+    "rule_id": "HIPAA_1",
+    "framework": "HIPAA",
+    "category": "Data Privacy",
+    "description": "Patient health information must not be disclosed without authorization.",
+    "keywords": ["patient", "health", "disclosure", "authorization"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_2",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Access to health data must be limited to authorized personnel.",
+    "keywords": ["access", "health", "authorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_3",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "User authentication is required before accessing patient data.",
+    "keywords": ["authentication", "user", "patient"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_4",
+    "framework": "HIPAA",
+    "category": "Data Sharing",
+    "description": "Health data must not be shared with third parties without consent.",
+    "keywords": ["health", "data", "sharing", "consent"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_5",
+    "framework": "HIPAA",
+    "category": "Data Privacy",
+    "description": "Patient data must be used only for approved medical purposes.",
+    "keywords": ["patient", "data", "medical", "purpose"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_6",
+    "framework": "HIPAA",
+    "category": "User Consent",
+    "description": "Patient consent must be obtained before using health data.",
+    "keywords": ["patient", "consent", "health"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_7",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Health data must be encrypted during storage and transmission.",
+    "keywords": ["data", "encryption", "storage", "transmission"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_8",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "System activities involving health data must be logged.",
+    "keywords": ["system", "logging", "health"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_9",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Security incidents involving health data must be reported promptly.",
+    "keywords": ["incident", "security", "report"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_10",
+    "framework": "HIPAA",
+    "category": "Data Retention",
+    "description": "Patient data must be retained only for required periods.",
+    "keywords": ["patient", "data", "retention"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_11",
+    "framework": "HIPAA",
+    "category": "Data Privacy",
+    "description": "Patient records must be protected from unauthorized access.",
+    "keywords": ["patient", "records", "unauthorized"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_12",
+    "framework": "HIPAA",
+    "category": "User Rights",
+    "description": "Patients must have the right to access their health records.",
+    "keywords": ["patient", "access", "records"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_13",
+    "framework": "HIPAA",
+    "category": "User Rights",
+    "description": "Patients must have the right to correct inaccurate health data.",
+    "keywords": ["patient", "correct", "data"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_14",
+    "framework": "HIPAA",
+    "category": "Data Sharing",
+    "description": "Health data sharing must follow strict privacy controls.",
+    "keywords": ["health", "sharing", "privacy"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_15",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Access logs must be maintained for all health data interactions.",
+    "keywords": ["logs", "access", "health"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_16",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Only minimum necessary health data should be accessed.",
+    "keywords": ["minimum", "data", "access"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_17",
+    "framework": "HIPAA",
+    "category": "Data Privacy",
+    "description": "Health data must remain confidential at all times.",
+    "keywords": ["health", "confidential", "data"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_18",
+    "framework": "HIPAA",
+    "category": "User Consent",
+    "description": "Patients must be informed about how their data is used.",
+    "keywords": ["patient", "data", "usage"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_19",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Systems must protect health data from cyber threats.",
+    "keywords": ["system", "health", "threats"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_20",
+    "framework": "HIPAA",
+    "category": "Data Retention",
+    "description": "Health data disposal must be secure and documented.",
+    "keywords": ["data", "disposal", "secure"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_21",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "User access must be revoked after role termination.",
+    "keywords": ["access", "user", "termination"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_22",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Regular risk assessments must be conducted for health systems.",
+    "keywords": ["risk", "assessment", "health"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_23",
+    "framework": "HIPAA",
+    "category": "Data Sharing",
+    "description": "Health data transfers must ensure data protection safeguards.",
+    "keywords": ["data", "transfer", "protection"],
+    "severity": "High"
+  },
+  {
+    "rule_id": "HIPAA_24",
+    "framework": "HIPAA",
+    "category": "Security",
+    "description": "Backup systems must ensure recovery of health data.",
+    "keywords": ["backup", "recovery", "health"],
+    "severity": "Medium"
+  },
+  {
+    "rule_id": "HIPAA_25",
+    "framework": "HIPAA",
+    "category": "Data Privacy",
+    "description": "Health data must not be used beyond its intended purpose.",
+    "keywords": ["health", "data", "purpose"],
+    "severity": "High"
+  }
+]

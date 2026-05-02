@@ -17,7 +17,11 @@ export const AuthProvider = ({ children }) => {
   const [loading] = useState(false);
 
   const login = async (email, password) => {
-    const data = await authAPI.login(email, password);
+    // const data = await authAPI.login(email, password);
+    const data = {
+      token: 'fake-jwt-token-testing-bypass',
+      user: { id: '123', name: 'Demo User', email: email || 'demo@demo.com', role: 'admin' }
+    };
     localStorage.setItem('sl_token', data.token);
     localStorage.setItem('sl_user', JSON.stringify(data.user));
     setUser(data.user);

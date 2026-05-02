@@ -13,6 +13,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
 } from 'recharts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 
 const WINDOW_DAYS = { '30D': 30, '90D': 90, '1Y': 365 };
@@ -83,19 +85,79 @@ const ExecutiveSummary = () => {
   }, [fetchTrends]);
 
   const handleDownloadSummary = () => {
-    const score = stats?.dashboard?.complianceScore || 0;
-    const blob = new Blob(
-      [`Sentinel Law — Executive Summary\nGenerated: ${new Date().toLocaleString()}\n\nOverall Risk Score: ${100 - score}/100\nCompliance Rate: ${score}%\nTotal Violations: ${stats?.dashboard?.totalFindings || 0}\nDocuments Processed: ${stats?.dashboard?.completedDocs || stats?.dashboard?.totalDocuments || 0}\n`],
-      { type: 'text/plain' }
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `executive-summary-${new Date().toISOString().slice(0,10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    if (!stats?.dashboard) return;
+    const { complianceScore, totalFindings, completedDocs, totalDocuments, findings } = stats.dashboard;
+    
+    const doc = new jsPDF();
+    
+    // Branded Header
+    doc.setFillColor(31, 41, 55);
+    doc.rect(0, 0, 210, 45, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text('SENTINEL LAW', 20, 25);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text('EXECUTIVE COMPLIANCE SUMMARY', 20, 33);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 140, 33);
+    
+    // KPI Section
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('High-Level Metrics', 20, 60);
+    
+    const kpiData = [
+      ['Overall Risk Score', `${100 - complianceScore}/100`],
+      ['Compliance Rate', `${complianceScore}%`],
+      ['Open Violations', `${totalFindings}`],
+      ['Documents Processed', `${completedDocs || totalDocuments || 0}`]
+    ];
+    
+    autoTable(doc, {
+      startY: 65,
+      body: kpiData,
+      theme: 'plain',
+      styles: { fontSize: 10, cellPadding: 4 },
+      columnStyles: { 0: { fontStyle: 'bold', width: 60 } }
+    });
+    
+    // Severity Breakdown
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Findings by Severity', 20, finalY);
+    
+    const bySev = findings?.by_severity || [];
+    const severityTable = bySev.map(s => [s._id.toUpperCase(), s.count]);
+    
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: [['Severity Level', 'Count']],
+      body: severityTable,
+      headStyles: { fillColor: [79, 70, 229] },
+      styles: { fontSize: 9 }
+    });
+    
+    // Risk Categories
+    const riskY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Top Risk Categories', 20, riskY);
+    
+    const byRisk = findings?.by_risk_type || [];
+    const riskTable = byRisk.slice(0, 5).map(r => [r._id || 'Unknown', r.count, `${Math.round((r.count / (totalFindings || 1)) * 100)}%`]);
+    
+    autoTable(doc, {
+      startY: riskY + 5,
+      head: [['Category', 'Findings', 'Frequency']],
+      body: riskTable,
+      headStyles: { fillColor: [139, 92, 246] },
+      styles: { fontSize: 9 }
+    });
+    
+    doc.save(`Sentinel_Executive_Summary_${new Date().toISOString().slice(0,10)}.pdf`);
   };
 
   // Determine if we have real trend data 
@@ -210,125 +272,122 @@ const ExecutiveSummary = () => {
         ))}
       </div>
 
-      {/* Risk Trends + Violations row */}
-      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
-        {/* Risk Trends Line Chart */}
-        <div className="card" style={{ flex: 2, background: 'var(--bg-card)', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>Risk Trends Over Time</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Live daily risk trajectory analysis</p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-main)', padding: '0.25rem', borderRadius: '8px' }}>
-              {['30D', '90D', '1Y'].map(w => (
-                <button
-                  key={w}
-                  onClick={() => setTrendWindow(w)}
-                  style={{
-                    padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                    background: trendWindow === w ? 'var(--bg-card)' : 'transparent',
-                    color: trendWindow === w ? 'var(--accent-blue)' : 'var(--text-muted)',
-                    boxShadow: trendWindow === w ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                    fontSize: '0.85rem', fontWeight: trendWindow === w ? 600 : 500,
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {w}
-                </button>
-              ))}
-            </div>
+      {/* Risk Trends Full Width */}
+      <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>Risk Trends Over Time</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Live daily risk trajectory analysis</p>
           </div>
-
-          {trendLoading ? (
-            <div style={{ height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-              <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', marginRight: '0.5rem' }} /> Loading trend data…
-            </div>
-          ) : !hasTrendData ? (
-            <div style={{ height: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', borderRadius: '12px', border: '2px dashed #e2e8f0' }}>
-              <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: '50%', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                <Clock size={28} color="#94a3b8" />
-              </div>
-              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '0.25rem' }}>No Risk Events Yet</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center', maxWidth: '280px' }}>
-                Upload and analyze documents to populate the risk trajectory chart.
-              </p>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={v => `${v}%`}
-                />
-                <Tooltip content={<TrendTooltip />} />
-                <Legend
-                  iconType="circle" iconSize={8}
-                  wrapperStyle={{ fontSize: '0.82rem', paddingTop: '1.25rem' }}
-                />
-                <Area
-                  type="monotone" dataKey="riskScore" name="Risk Score"
-                  stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorRisk)"
-                  activeDot={{ r: 6, strokeWidth: 0 }}
-                />
-                <Area
-                  type="monotone" dataKey="complianceRate" name="Compliance Rate"
-                  stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorComp)"
-                  activeDot={{ r: 6, strokeWidth: 0 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
+          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-main)', padding: '0.25rem', borderRadius: '8px' }}>
+            {['30D', '90D', '1Y'].map(w => (
+              <button
+                key={w}
+                onClick={() => setTrendWindow(w)}
+                style={{
+                  padding: '0.25rem 0.75rem', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                  background: trendWindow === w ? 'var(--bg-card)' : 'transparent',
+                  color: trendWindow === w ? 'var(--accent-blue)' : 'var(--text-muted)',
+                  boxShadow: trendWindow === w ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                  fontSize: '0.85rem', fontWeight: trendWindow === w ? 600 : 500,
+                  transition: 'all 0.2s'
+                }}
+              >
+                {w}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Top Recurring Violations */}
-        <div className="card" style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>Top Recurring Violations</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>Most frequent compliance issues</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-            {loading ? (
-              <div style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Loading violations...</div>
-            ) : (!stats?.dashboard?.findings?.by_risk_type || stats.dashboard.findings.by_risk_type.length === 0) ? (
-              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No violations found.</div>
-            ) : (
-              stats.dashboard.findings.by_risk_type.slice(0, 5).map((v, i) => {
-                const total = stats.dashboard.totalFindings || 1;
-                const pct = Math.round((v.count / total) * 100);
-                const color = i === 0 ? 'var(--accent-red)' : (i < 3 ? 'var(--accent-orange)' : 'var(--accent-blue)');
-                return (
-                  <div key={i}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                      <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>{v._id || 'Unknown'} Risks</span>
-                      <span style={{ color, fontWeight: 700, fontSize: '0.9rem' }}>{v.count}</span>
-                    </div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Frequency: {pct}% of total</div>
-                    <div style={{ width: '100%', height: '6px', background: 'var(--bg-card-hover)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.8s ease' }} />
-                    </div>
-                  </div>
-                );
-              })
-            )}
+        {trendLoading ? (
+          <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', marginRight: '0.5rem' }} /> Loading trend data…
           </div>
+        ) : !hasTrendData ? (
+          <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', borderRadius: '12px', border: '2px dashed #e2e8f0' }}>
+            <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: '50%', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+              <Clock size={28} color="#94a3b8" />
+            </div>
+            <h4 style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '0.25rem' }}>No Risk Events Yet</h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center', maxWidth: '280px' }}>
+              Upload and analyze documents to populate the risk trajectory chart.
+            </p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={320}>
+            <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={v => `${v}%`}
+              />
+              <Tooltip content={<TrendTooltip />} />
+              <Legend
+                iconType="circle" iconSize={8}
+                wrapperStyle={{ fontSize: '0.82rem', paddingTop: '1.25rem' }}
+              />
+              <Area
+                type="monotone" dataKey="riskScore" name="Risk Score"
+                stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorRisk)"
+                activeDot={{ r: 6, strokeWidth: 0 }}
+              />
+              <Area
+                type="monotone" dataKey="complianceRate" name="Compliance Rate"
+                stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorComp)"
+                activeDot={{ r: 6, strokeWidth: 0 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Top Recurring Violations Stacked Below */}
+      <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+        <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>Top Recurring Violations</h3>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>Most frequent compliance issues across all analyzed documents</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
+          {loading ? (
+            <div style={{ color: 'var(--text-muted)', textAlign: 'center', gridColumn: '1/-1' }}>Loading violations...</div>
+          ) : (!stats?.dashboard?.findings?.by_risk_type || stats.dashboard.findings.by_risk_type.length === 0) ? (
+            <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem', gridColumn: '1/-1' }}>No violations found.</div>
+          ) : (
+            stats.dashboard.findings.by_risk_type.slice(0, 5).map((v, i) => {
+              const total = stats.dashboard.totalFindings || 1;
+              const pct = Math.round((v.count / total) * 100);
+              const color = i === 0 ? 'var(--accent-red)' : (i < 3 ? 'var(--accent-orange)' : 'var(--accent-blue)');
+              return (
+                <div key={i}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '0.9rem', textTransform: 'capitalize' }}>{v._id || 'Unknown'} Risks</span>
+                    <span style={{ color, fontWeight: 700, fontSize: '0.9rem' }}>{v.count}</span>
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Frequency: {pct}% of total</div>
+                  <div style={{ width: '100%', height: '6px', background: 'var(--bg-card-hover)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.8s ease' }} />
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

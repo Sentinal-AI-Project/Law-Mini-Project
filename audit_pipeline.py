@@ -1,3 +1,17 @@
+# =============================================================================
+# ⚠️  LEGACY / DISCONNECTED — DO NOT DELETE
+#
+# This was the original NLP pipeline used by app.py.
+# It has been replaced by the new AI Engine located in the AI/ directory:
+#   AI/Engine/audit_engine.py   — main orchestrator
+#   AI/Engine/clause_engine.py  — clause segmentation & rule matching
+#   AI/Engine/embedding_engine.py — sentence embeddings
+#   AI/Engine/rule_loader.py    — loads rules from AI/data/*.json
+#
+# The root app.py now imports from the AI package.
+# This file is preserved for reference and rollback purposes.
+# =============================================================================
+
 import pdfplumber
 import spacy
 import json
@@ -7,6 +21,7 @@ import torch
 from sentence_transformers import SentenceTransformer, util
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+
 
 # =========================
 # 🔹 LOAD MODELS

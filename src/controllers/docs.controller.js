@@ -39,6 +39,7 @@ const mapFinding = (row) => ({
     suggested_fix: row.suggested_fix,
     policy_ref_id: row.policy_ref_id,
     created_at: row.created_at,
+    status: row.status,
 });
 
 /**
@@ -252,7 +253,7 @@ exports.analyze = async (req, res) => {
  */
 exports.getFindings = async (req, res) => {
     try {
-        const limit = Number(req.query.limit || 10);
+        const limit = Number(req.query.limit || 500);
         const offset = Number(req.query.offset || 0);
         const { severity } = req.query;
         const minConfidence = Number(req.query.min_confidence || 0);

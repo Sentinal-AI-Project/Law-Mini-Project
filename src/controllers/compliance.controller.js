@@ -73,7 +73,7 @@ exports.getDashboard = async (req, res) => {
     try {
         const [docsRes, findingsRes] = await Promise.all([
             supabase.from('documents').select('id, status', { count: 'exact' }),
-            supabase.from('findings').select('id, severity, risk_type, confidence, created_at, document_id', { count: 'exact' }).gte('confidence', 0.1),
+            supabase.from('findings').select('id, severity, risk_type, confidence, created_at, document_id, status', { count: 'exact' }).gte('confidence', 0.1),
         ]);
 
         if (docsRes.error) throw docsRes.error;
@@ -88,24 +88,34 @@ exports.getDashboard = async (req, res) => {
 
         const severityMap = {};
         const riskTypeMap = {};
+        let resolvedCount = 0;
+        let activeWeightedRisk = 0;
+        let totalWeightedRisk = 0;
+
         for (const finding of findings) {
+            const isResolved = finding.status === 'reviewed' || finding.status === 'resolved';
+            if (isResolved) {
+                resolvedCount++;
+            }
+
             severityMap[finding.severity] = (severityMap[finding.severity] || 0) + 1;
             riskTypeMap[finding.risk_type] = (riskTypeMap[finding.risk_type] || 0) + 1;
+
+            const weight = finding.severity === 'critical' ? 4 : finding.severity === 'high' ? 3 : finding.severity === 'medium' ? 2 : 1;
+            totalWeightedRisk += weight;
+            if (!isResolved) {
+                activeWeightedRisk += weight;
+            }
         }
 
-        const critical = severityMap.critical || 0;
-        const high = severityMap.high || 0;
-        const medium = severityMap.medium || 0;
-        const low = severityMap.low || 0;
-        const weightedRisk = (critical * 4) + (high * 3) + (medium * 2) + low;
-        const maxRisk = Math.max(findings.length * 4, 1);
-        const complianceScore = Math.max(0, Math.min(100, Math.round(100 - (weightedRisk / maxRisk) * 100)));
+        const maxRisk = Math.max(totalWeightedRisk, 1);
+        const complianceScore = Math.max(0, Math.min(100, Math.round(100 - (activeWeightedRisk / maxRisk) * 100)));
 
         const severityBreakdown = Object.entries(severityMap).map(([key, count]) => ({ _id: key, count }));
         const riskTypeBreakdown = Object.entries(riskTypeMap).map(([key, count]) => ({ _id: key, count }));
 
         const criticalFindings = findings
-            .filter((f) => f.severity === 'critical')
+            .filter((f) => f.severity === 'critical' && f.status !== 'reviewed' && f.status !== 'resolved')
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 5)
             .map((f) => ({ ...f, _id: f.id }));
@@ -114,6 +124,8 @@ exports.getDashboard = async (req, res) => {
         res.json({
             totalDocuments: docs.length,
             totalFindings: findings.length,
+            resolvedCount,
+            activeFindings: findings.length - resolvedCount,
             complianceScore,
             processingCount: pendingDocuments + analyzingDocuments,
             documents: {
@@ -124,6 +136,8 @@ exports.getDashboard = async (req, res) => {
             },
             findings: {
                 total: findings.length,
+                resolved: resolvedCount,
+                active: findings.length - resolvedCount,
                 by_severity: severityBreakdown,
                 by_risk_type: riskTypeBreakdown,
             },
@@ -215,7 +229,7 @@ exports.getTrends = async (req, res) => {
 
         const { data: findings, error } = await supabase
             .from('findings')
-            .select('id, severity, created_at')
+            .select('id, severity, created_at, status')
             .gte('created_at', since.toISOString())
             .order('created_at', { ascending: true });
 
@@ -234,7 +248,10 @@ exports.getTrends = async (req, res) => {
         for (const f of findings || []) {
             const key = f.created_at.slice(0, 10);
             if (dayMap[key]) {
-                dayMap[key][f.severity] = (dayMap[key][f.severity] || 0) + 1;
+                const isResolved = f.status === 'reviewed' || f.status === 'resolved';
+                if (!isResolved) {
+                    dayMap[key][f.severity] = (dayMap[key][f.severity] || 0) + 1;
+                }
             }
         }
 

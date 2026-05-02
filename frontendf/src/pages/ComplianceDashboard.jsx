@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { FileText, AlertTriangle, HelpCircle, Clock } from 'lucide-react';
+import { FileText, AlertTriangle, HelpCircle, Clock, CheckCircle2 } from 'lucide-react';
 import { complianceAPI, docsAPI } from '../services/api';
 import { useComplianceData } from '../hooks/useComplianceData';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
@@ -40,7 +40,7 @@ const ComplianceDashboard = () => {
       low: { color: 'var(--accent-teal)' },
       medium: { color: 'var(--accent-orange)' },
       high: { color: 'var(--accent-red)' },
-      critical: { color: 'var(--accent-blue)' }
+      critical: { color: 'var(--accent-red)' }
     };
     return bySev.map(s => ({
       name: (s._id || s.severity || 'Unknown').charAt(0).toUpperCase() + (s._id || s.severity || 'Unknown').slice(1),
@@ -69,46 +69,56 @@ const ComplianceDashboard = () => {
 
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
+        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
            <div>
-             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Documents</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Documents</div>
+             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
                {loading ? '—' : totalDocs}
              </div>
-             <div style={{ color: 'var(--accent-teal)', fontSize: '0.85rem', fontWeight: 500 }}>All uploaded documents</div>
+             <div style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', fontWeight: 500 }}>Total uploads</div>
            </div>
-           <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '8px' }}><FileText size={20} color="#3b82f6" /></div>
+           <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '10px', borderRadius: '8px' }}><FileText size={18} color="#3b82f6" /></div>
         </div>
-        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
            <div>
-             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Findings</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-               {loading ? '—' : (stats?.dashboard?.totalFindings ?? stats?.findings?.total ?? '—')}
+             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Active Risks</div>
+             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+               {loading ? '—' : (stats?.dashboard?.activeFindings ?? '—')}
              </div>
-             <div style={{ color: 'var(--accent-red)', fontSize: '0.85rem', fontWeight: 500 }}>Across all documents</div>
+             <div style={{ color: 'var(--accent-red)', fontSize: '0.75rem', fontWeight: 500 }}>Requiring review</div>
            </div>
-           <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '8px' }}><AlertTriangle size={20} color="#dc2626" /></div>
+           <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}><AlertTriangle size={18} color="#dc2626" /></div>
         </div>
-        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
            <div>
-             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Compliance Score</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Resolved</div>
+             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+               {loading ? '—' : (stats?.dashboard?.resolvedCount ?? '—')}
+             </div>
+             <div style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', fontWeight: 500 }}>Issues reviewed</div>
+           </div>
+           <div style={{ background: 'rgba(11, 220, 181, 0.1)', padding: '10px', borderRadius: '8px' }}><CheckCircle2 size={18} color="#10b981" /></div>
+        </div>
+        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
+           <div>
+             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Score</div>
+             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
                {loading ? '—' : (stats?.dashboard?.complianceScore != null ? `${stats.dashboard.complianceScore}%` : '—')}
              </div>
-             <div style={{ color: 'var(--accent-teal)', fontSize: '0.85rem', fontWeight: 500 }}>Overall score</div>
+             <div style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', fontWeight: 500 }}>Overall health</div>
            </div>
-           <div style={{ background: 'rgba(11, 220, 181, 0.1)', padding: '12px', borderRadius: '8px' }}><HelpCircle size={20} color="#10b981" /></div>
+           <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '10px', borderRadius: '8px' }}><HelpCircle size={18} color="#3b82f6" /></div>
         </div>
-        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
            <div>
-             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Processing</div>
-             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>In Queue</div>
+             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
                {loading ? '—' : processingDocs}
              </div>
-             <div style={{ color: 'var(--accent-blue)', fontSize: '0.85rem', fontWeight: 500 }}>Documents in queue</div>
+             <div style={{ color: 'var(--accent-orange)', fontSize: '0.75rem', fontWeight: 500 }}>Processing</div>
            </div>
-           <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '12px', borderRadius: '8px' }}><Clock size={20} color="#d97706" /></div>
+           <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '10px', borderRadius: '8px' }}><Clock size={18} color="#d97706" /></div>
         </div>
       </div>
 

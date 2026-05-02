@@ -23,9 +23,10 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      // Direct pass without using actual credentials for rapid testing
-      const fakeEmail = email || 'admin@demo.com'; 
-      await login(fakeEmail, 'any_password'); 
+      if (!email || !password) {
+        throw new Error('Please enter both email and password.');
+      }
+      await login(email, password); 
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -122,10 +123,11 @@ const Login = () => {
                   <Mail size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type="email"
+                    className="form-input"
                     placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
+                    style={{ paddingLeft: '2.75rem' }}
                   />
                 </div>
               </div>
@@ -139,10 +141,11 @@ const Login = () => {
                   <Lock size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type="password"
+                    className="form-input"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '1rem' }}
+                    style={{ paddingLeft: '2.75rem' }}
                   />
                 </div>
               </div>
@@ -163,13 +166,12 @@ const Login = () => {
               <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
             </div>
 
-            <button onClick={handleDemoSso} className="btn btn-outline" style={{ width: '100%', color: 'var(--text-main)', gap: '0.75rem' }}>
-              <Building2 size={20} />
-              Enterprise SSO
+            <button onClick={() => navigate('/register')} className="btn btn-outline" style={{ width: '100%', color: 'var(--text-main)', gap: '0.75rem' }}>
+              Create New Account
             </button>
 
             <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-              Don't have an account? <a href="/#contact" style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>Contact Sales</a>
+              Need help? <a href="/#contact" style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>Contact Support</a>
             </div>
           </div>
         </motion.div>

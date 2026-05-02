@@ -10,8 +10,8 @@ const RiskDashboard = () => {
 
   const { stats: complianceStats, loading: complianceLoading } = useComplianceData(30000);
   const [miscStats, setMiscStats] = useState({
-    reportsCount: 0,
-    completedAnalysisCount: 0,
+    totalDocuments: 0,
+    resolvedIssues: 0,
   });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,18 +20,16 @@ const RiskDashboard = () => {
     const loadData = async () => {
       try {
         const [
-          reportsData,
-          completedDocs,
+          totalDocs,
           recentFindings
         ] = await Promise.allSettled([
-          reportsAPI.list({ limit: 1 }),
-          docsAPI.list({ status: 'completed', limit: 1 }),
+          docsAPI.list({ limit: 1 }),
           findingsAPI.list({ limit: 3 })
         ]);
 
         setMiscStats({
-          reportsCount: reportsData.status === 'fulfilled' ? (reportsData.value.total || 0) : 0,
-          completedAnalysisCount: completedDocs.status === 'fulfilled' ? (completedDocs.value.total || 0) : 0,
+          totalDocuments: totalDocs.status === 'fulfilled' ? (totalDocs.value.total || 0) : 0,
+          resolvedIssues: complianceStats?.dashboard?.resolvedCount || 0,
         });
 
         if (recentFindings.status === 'fulfilled' && recentFindings.value.findings) {
@@ -44,7 +42,7 @@ const RiskDashboard = () => {
       }
     };
     loadData();
-  }, []);
+  }, [complianceStats]);
 
   const criticalCount = complianceStats?.findings?.by_severity?.find(s => s._id === 'critical')?.count || 0;
   const highCount = complianceStats?.findings?.by_severity?.find(s => s._id === 'high')?.count || 0;
@@ -89,11 +87,11 @@ const RiskDashboard = () => {
             <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '10px', borderRadius: '8px' }}>
               <FileText size={20} color="#2563eb" />
             </div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-blue)' }}>ACTIVE</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-blue)' }}>LIBRARY</span>
           </div>
           <div>
-              <p style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{loading ? '—' : miscStats.reportsCount}</p>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Reports Generated</div>
+              <p style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{loading ? '—' : miscStats.totalDocuments}</p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Total Documents</div>
           </div>
         </div>
 
@@ -102,11 +100,11 @@ const RiskDashboard = () => {
             <div style={{ background: 'rgba(11, 220, 181, 0.1)', padding: '10px', borderRadius: '8px' }}>
               <CheckCircle2 size={20} color="#10b981" />
             </div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-teal)' }}>DONE</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-teal)' }}>REMEDIATION</span>
           </div>
           <div>
-              <p style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--accent-teal)', marginBottom: '0.25rem' }}>{loading ? '—' : miscStats.completedAnalysisCount}</p>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Completed Analysis</div>
+              <p style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--accent-teal)', marginBottom: '0.25rem' }}>{complianceLoading ? '—' : (complianceStats?.dashboard?.resolvedCount ?? 0)}</p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Resolved Issues</div>
           </div>
         </div>
       </div>

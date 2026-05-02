@@ -3,11 +3,9 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Info, UploadCloud, FileText, CheckCircle2, AlertTriangle, AlertCircle, Play, X } from 'lucide-react';
 import { docsAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import CustomDropdown from '../components/CustomDropdown';
 
 const UploadDocuments = () => {
   const navigate = useNavigate();
-  const [framework, setFramework] = useState('');
   const [files, setFiles] = useState([]); // [{ file, status, docId, error, progress }]
   const [analyzing, setAnalyzing] = useState(false);
   const [historyDocs, setHistoryDocs] = useState([]);
@@ -74,8 +72,8 @@ const UploadDocuments = () => {
       const fileName = `${Date.now()}-${file.name}`;
       
       try {
-        const docTypeMapping = framework && ['SOC 2', 'GDPR', 'HIPAA', 'ISO 27001'].includes(framework) ? 'policy' : 'contract';
-        const frameworksArr = [framework].filter(f => f && f !== 'Select Framework');
+        const docTypeMapping = 'contract';
+        const frameworksArr = [];
 
         // Upload and register via the Backend securely
         const data = await docsAPI.upload(file, docTypeMapping, frameworksArr);
@@ -191,15 +189,7 @@ const UploadDocuments = () => {
             </span>
           </div>
 
-          <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '1.1rem' }}>Compliance Framework</label>
-            <CustomDropdown 
-              options={['Select Framework', 'SOC 2', 'GDPR', 'HIPAA', 'ISO 27001']} 
-              width="100%" 
-              value={framework}
-              onChange={setFramework}
-            />
-          </div>
+
 
           <div 
             className="card" 

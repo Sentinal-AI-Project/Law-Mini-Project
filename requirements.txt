@@ -1,7 +1,20 @@
+# Core framework
 fastapi
-uvicorn
+uvicorn[standard]
+
+# PDF extraction
 pdfplumber
+
+# NLP / Embeddings
 spacy
-torch
 sentence-transformers
+torch
+
+# Report generation (used by AI/services/report_service.py)
 reportlab
+
+# HTTP client (used by app.py to download remote files & call OpenRouter)
+requests
+
+# Environment variables
+python-dotenv

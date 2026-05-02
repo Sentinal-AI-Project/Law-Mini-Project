@@ -52,7 +52,7 @@ const attachEntityMaps = async (findings) => {
  */
 exports.listFindings = async (req, res) => {
     try {
-        const limit = Number(req.query.limit || 20);
+        const limit = Number(req.query.limit || 500);
         const offset = Number(req.query.offset || 0);
         const minConfidence = Number(req.query.min_confidence || 0.1);
         const { severity, risk_type, document_id } = req.query;

@@ -4,6 +4,8 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Search, AlertTriangle, MessageSquare, Check, ExternalLink, DownloadCloud, X } from 'lucide-react';
 import { findingsAPI, docsAPI } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const severityColor = (s) => {
   const lowS = (s || 'low').toLowerCase();
@@ -43,7 +45,7 @@ const Findings = () => {
     const fetchFindings = async () => {
       setLoading(true);
       try {
-        const params = { min_confidence: 0.1 };
+        const params = { min_confidence: 0.1, limit: 1000 };
         if (selectedDocId !== 'All') params.document_id = selectedDocId;
         
         const data = await findingsAPI.list(params);
@@ -125,14 +127,59 @@ const Findings = () => {
     }
   };
 
+  const handleExportPdf = () => {
+    if (!findings.length) return;
+    
+    const doc = new jsPDF();
+    const docName = docs.find(d => d.id === selectedDocId || d._id === selectedDocId)?.filename || 'All_Documents';
+    
+    // Header
+    doc.setFillColor(31, 41, 55);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('SENTINEL LAW', 20, 25);
+    doc.setFontSize(10);
+    doc.text('COMPLIANCE FINDINGS EXPORT', 20, 32);
+    
+    // Summary Info
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Compliance Findings Details', 20, 55);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+    doc.text(`Source: ${docName}`, 20, 65);
+    doc.text(`Total Findings: ${findings.length}`, 20, 72);
+    doc.text(`Export Date: ${new Date().toLocaleString()}`, 20, 79);
+    
+    // Findings Table
+    const tableData = findings.map((f, i) => [
+      i + 1,
+      f.severity.toUpperCase(),
+      f.risk_type || 'General',
+      f.description,
+      f.status || 'pending'
+    ]);
+    
+    autoTable(doc, {
+      startY: 90,
+      head: [['#', 'Severity', 'Type', 'Description', 'Status']],
+      body: tableData,
+      headStyles: { fillColor: [79, 70, 229] },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      styles: { fontSize: 8, cellPadding: 3 }
+    });
+    
+    doc.save(`Sentinel_Findings_${docName.replace(/\.[^/.]+$/, "")}.pdf`);
+  };
+
   const handleExportCsv = () => {
     if (!findings.length) return;
-    const headers = 'ID,Severity,Description,Explanation,Type,Confidence,Notes,Status,Created At\n';
+    const headers = 'ID,Severity,Description,Type,Confidence,Status,Created At\n';
     const csvContent = findings.map(f => {
       const desc = (f.description || '').replace(/"/g, '""');
-      const expl = (f.explanation || '').replace(/"/g, '""');
-      const notes = (f.notes || '').replace(/"/g, '""');
-      return `"${f._id}","${f.severity}","${desc}","${expl}","${f.risk_type}",${f.confidence},"${notes}","${f.status}","${f.created_at}"`;
+      return `"${f._id}","${f.severity}","${desc}","${f.risk_type}",${f.confidence},"${f.status}","${f.created_at}"`;
     }).join('\n');
     
     const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -143,6 +190,7 @@ const Findings = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const filteredFindings = findings.filter(f => {
@@ -159,9 +207,14 @@ const Findings = () => {
         <div style={{ width: '400px', display: 'flex', flexDirection: 'column', background: 'var(--bg-card)', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 600 }}>Findings</h3>
-             <button onClick={handleExportCsv} style={{ background: 'var(--bg-card-hover)', border: 'none', padding: '0.4rem 0.6rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                <DownloadCloud size={14} /> Export
-             </button>
+             <div style={{ display: 'flex', gap: '0.5rem' }}>
+               <button onClick={handleExportPdf} style={{ background: 'var(--bg-card-hover)', border: 'none', padding: '0.4rem 0.6rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--accent-blue)', fontSize: '0.8rem' }}>
+                  <DownloadCloud size={14} /> Export PDF
+               </button>
+               <button onClick={handleExportCsv} style={{ background: 'var(--bg-card-hover)', border: 'none', padding: '0.4rem 0.6rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                  <DownloadCloud size={14} /> CSV
+               </button>
+             </div>
           </div>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ position: 'relative', marginBottom: '1rem' }}>
@@ -243,7 +296,9 @@ const Findings = () => {
                     <h4 style={{ color: 'var(--text-main)', marginBottom: '0.25rem', fontSize: '1rem' }}>{finding.description || 'Finding'}</h4>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', overflow: 'hidden' }}>
-                        <span style={{ color: 'var(--accent-blue)', fontWeight: 600, flexShrink: 0 }}>{finding.policy_ref_id?.framework || '—'}</span>
+                        <span style={{ color: 'var(--accent-blue)', fontWeight: 600, flexShrink: 0 }}>
+                          {finding.policy_ref_id?.framework || finding.risk_type || 'General'}
+                        </span>
                         <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• {finding.document_id?.filename || 'Unknown Doc'}</span>
                       </div>
                       <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>{finding.created_at ? new Date(finding.created_at).toLocaleDateString() : '—'}</span>
@@ -509,10 +564,10 @@ const Findings = () => {
                       <ExternalLink size={16} color="#3b82f6" />
                     </div>
                     <p style={{ color: 'var(--accent-blue)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>
-                      {activeFinding.policy_ref_id.framework} guidelines for security and processing.
+                      {(activeFinding.policy_ref_id?.framework || activeFinding.risk_type || 'Compliance')} guidelines for security and processing.
                     </p>
                     <div style={{ display: 'flex', gap: '2rem', fontSize: '0.85rem', color: 'var(--accent-blue)' }}>
-                      <span>Framework: {activeFinding.policy_ref_id.framework}</span>
+                      <span>Framework: {activeFinding.policy_ref_id?.framework || activeFinding.risk_type || 'General'}</span>
                     </div>
                   </div>
                 </div>

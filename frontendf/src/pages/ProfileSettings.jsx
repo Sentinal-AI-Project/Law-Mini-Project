@@ -235,27 +235,27 @@ const ProfileSettings = () => {
             <form onSubmit={handleProfileUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Full Name</label>
-                <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="text" className="form-input" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} style={{ width: '100%' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Email Address</label>
-                  <input type="email" value={profileData.email} disabled style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'var(--bg-main)' }} />
+                  <input type="email" className="form-input" value={profileData.email} disabled style={{ width: '100%' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Phone Number</label>
-                  <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} placeholder="+1 (555) 000-0000" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                  <input type="tel" className="form-input" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} placeholder="+1 (555) 000-0000" style={{ width: '100%' }} />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Role</label>
-                  <input type="text" readOnly defaultValue={user?.role || 'analyst'} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'var(--bg-main)', textTransform: 'capitalize' }} />
+                  <input type="text" className="form-input" readOnly defaultValue={user?.role || 'analyst'} style={{ width: '100%', textTransform: 'capitalize' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Department</label>
-                  <input type="text" value={profileData.department} onChange={(e) => setProfileData({...profileData, department: e.target.value})} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                  <input type="text" className="form-input" value={profileData.department} onChange={(e) => setProfileData({...profileData, department: e.target.value})} style={{ width: '100%' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -272,15 +272,15 @@ const ProfileSettings = () => {
             <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Current Password</label>
-                <input type="password" required value={passForm.old} onChange={(e) => setPassForm({ ...passForm, old: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="password" className="form-input" required value={passForm.old} onChange={(e) => setPassForm({ ...passForm, old: e.target.value })} style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>New Password</label>
-                <input type="password" required value={passForm.new} onChange={(e) => setPassForm({ ...passForm, new: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="password" className="form-input" required value={passForm.new} onChange={(e) => setPassForm({ ...passForm, new: e.target.value })} style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Confirm New Password</label>
-                <input type="password" required value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                <input type="password" className="form-input" required value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} style={{ width: '100%' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button type="submit" className="btn btn-primary" style={{ background: 'var(--accent-purple)', color: 'var(--bg-card)' }}>Update Password</button>

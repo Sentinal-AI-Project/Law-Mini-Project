@@ -3,9 +3,9 @@ from fastapi.responses import JSONResponse, FileResponse
 from io import BytesIO
 import os
 from AI.Engine.audit_engine import run_audit, calculate_compliance_score
-from AI.Engine.audit_engine import run_audit
-from AI.services.pdf_services import extract_text_from_pdf   # ✅ fixed name
+from AI.services.pdf_services import extract_text_from_pdf
 from AI.services.report_service import generate_pdf_report, generate_summary_report
+
 
 app = FastAPI()
 

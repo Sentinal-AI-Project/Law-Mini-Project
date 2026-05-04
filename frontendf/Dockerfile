@@ -1,16 +1,7 @@
-FROM node:20-alpine as build
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
 FROM nginx:alpine
-# Copy the built React app to Nginx's web root
-COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy the pre-built React app (built in CI) to Nginx's web root
+COPY dist /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80

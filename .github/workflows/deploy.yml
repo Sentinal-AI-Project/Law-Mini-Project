@@ -11,26 +11,20 @@ on:
       - Somesh
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Docker Compose Services (Dry Run)
-        run: docker compose build
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-test
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Deploying to AWS EC2 instance over SSH using docker-compose
+      # Build frontend in CI (GitHub runner has 7GB RAM, EC2 only has 460MB)
+      - name: Build frontend
+        run: |
+          cd frontendf
+          npm install
+          npm run build
+
+      # Copy entire repo (including built frontend dist/) to EC2
       - name: Copy files to EC2
         uses: appleboy/scp-action@master
         with:
@@ -46,13 +40,27 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
+          command_timeout: 30m
           script: |
             cd ~/app
+
             # Create .env file with secrets for backend
             echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-            
+
+            # Setup swap if not already present (needed for Docker builds on small instances)
+            if [ ! -f /swapfile ]; then
+              sudo fallocate -l 2G /swapfile
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+            fi
+            sudo swapon /swapfile 2>/dev/null || true
+
+            # Clean up old Docker artifacts to free disk space
+            docker system prune -af 2>/dev/null || true
+
             # Restart services
             docker compose down
             docker compose build

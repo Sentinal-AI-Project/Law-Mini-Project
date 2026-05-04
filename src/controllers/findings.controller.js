@@ -104,6 +104,7 @@ exports.listFindings = async (req, res) => {
 
         const { data, error, count } = await query
             .order('created_at', { ascending: false })
+            .order('id', { ascending: true }) // Stable sort tie-breaker
             .range(offset, offset + limit - 1);
 
         if (error) throw error;

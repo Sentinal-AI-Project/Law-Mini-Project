@@ -10,6 +10,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Trust proxy for express-rate-limit (essential for Nginx/AWS deployments)
+app.set('trust proxy', 1);
+
 // ─── Middleware ───────────────────────────────────────────
 // Security Headers
 app.use(helmet());

@@ -181,27 +181,36 @@ const AuditReport = () => {
   
   const compScore = totalFindings === 0 && selectedDoc ? 100 : Math.max(2, Math.min(100, Math.round(100 - (activeWeightedRisk / Math.max(totalWeightedRisk, 1)) * 100)));
   
-  // Real Confidence Aggregation
-  const confidenceDistribution = (() => {
-    if (!docFindings.length) return { veryHigh: 0, high: 0, medium: 0, low: 0 };
-    return docFindings.reduce((acc, f) => {
-      const c = f.confidence || 0;
-      if (c >= 0.85) acc.veryHigh++;
-      else if (c >= 0.7) acc.high++;
-      else if (c >= 0.5) acc.medium++;
-      else acc.low++;
-      return acc;
-    }, { veryHigh: 0, high: 0, medium: 0, low: 0 });
+  // Average Confidence by Severity
+  const avgConfidenceBySeverity = (() => {
+    if (!docFindings.length) return { critical: 0, high: 0, medium: 0, low: 0 };
+    const sums = { critical: 0, high: 0, medium: 0, low: 0 };
+    const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+    
+    docFindings.forEach(f => {
+      const s = f.severity?.toLowerCase();
+      if (sums[s] !== undefined) {
+        sums[s] += (f.confidence || 0);
+        counts[s]++;
+      }
+    });
+    
+    return {
+      critical: counts.critical ? (sums.critical / counts.critical) * 100 : 0,
+      high: counts.high ? (sums.high / counts.high) * 100 : 0,
+      medium: counts.medium ? (sums.medium / counts.medium) * 100 : 0,
+      low: counts.low ? (sums.low / counts.low) * 100 : 0,
+    };
   })();
 
   const confData = [
-    { label: 'Very High', value: confidenceDistribution.veryHigh, color: 'var(--accent-teal)' },
-    { label: 'High', value: confidenceDistribution.high, color: '#0d9488' },
-    { label: 'Medium', value: confidenceDistribution.medium, color: '#0284c7' },
-    { label: 'Low', value: confidenceDistribution.low, color: 'var(--accent-blue)' }
+    { label: 'Low', value: avgConfidenceBySeverity.low, color: 'var(--accent-teal)' },
+    { label: 'Medium', value: avgConfidenceBySeverity.medium, color: 'var(--accent-blue)' },
+    { label: 'High', value: avgConfidenceBySeverity.high, color: 'var(--accent-orange)' },
+    { label: 'Critical', value: avgConfidenceBySeverity.critical, color: 'var(--accent-red)' }
   ];
 
-  const maxConfValue = Math.max(...confData.map(d => d.value), 10);
+  const maxConfValue = 100;
 
   // Determine conic gradient for pie chart dynamically
   const getPieStyle = () => {
@@ -324,11 +333,12 @@ const AuditReport = () => {
               </div>
 
               <div style={{ background: 'var(--bg-main)', padding: '1.5rem', borderRadius: '12px' }}>
-                <h4 style={{ color: 'var(--text-main)', marginBottom: '1.5rem', fontSize: '1rem' }}>Confidence Statistics</h4>
+                <h4 style={{ color: 'var(--text-main)', marginBottom: '0.25rem', fontSize: '1rem' }}>Avg. Match Confidence</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '1.5rem' }}>Average similarity score against compliance rules.</p>
                 <div style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '1rem', padding: '0 1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e2e8f0', position: 'relative' }}>
                   {[1, 0.75, 0.5, 0.25].map(p => (
                     <div key={p} style={{ position: 'absolute', bottom: `${p * 100}%`, left: 0, right: 0, borderTop: '1px dashed rgba(226, 232, 240, 0.5)', zIndex: 0, display: 'flex', alignItems: 'center' }}>
-                      <span style={{ position: 'absolute', left: '-25px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>{Math.round(maxConfValue * p)}</span>
+                      <span style={{ position: 'absolute', left: '-35px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>{Math.round(maxConfValue * p)}%</span>
                     </div>
                   ))}
                   {confData.map((bar, i) => (

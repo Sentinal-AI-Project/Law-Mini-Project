@@ -48,6 +48,7 @@ jobs:
             echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
 
             # Setup swap if not already present (needed for Docker builds on small instances)
             if [ ! -f /swapfile ]; then

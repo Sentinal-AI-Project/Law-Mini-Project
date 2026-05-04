@@ -16,15 +16,27 @@ def run_audit(text):
         results.append(result)
 
     return results
+
 def calculate_compliance_score(results):
-    score = 100
-
+    """
+    Calculates a weighted compliance score.
+    Low Risk/No Match = 100% compliant
+    Medium Risk = 50% compliant
+    High Risk = 0% compliant
+    """
+    if not results:
+        return 100.0
+        
+    total = len(results)
+    compliant_points = 0
+    
     for r in results:
-        if r["risk"] == "High":
-            score -= 3
-        elif r["risk"] == "Medium":
-            score -= 2
+        risk = r.get("risk", "Low")
+        if risk == "High":
+            compliant_points += 0
+        elif risk == "Medium":
+            compliant_points += 0.5
         else:
-            score -= 1
-
-    return max(score, 0)
+            compliant_points += 1
+            
+    return round((compliant_points / total) * 100, 2)

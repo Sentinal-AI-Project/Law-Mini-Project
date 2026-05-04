@@ -25,6 +25,7 @@ services:
       - "5001:5001"
     environment:
       - PORT=5001
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
 
   frontend:
     build:

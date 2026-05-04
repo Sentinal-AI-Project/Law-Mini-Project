@@ -81,9 +81,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
-    // Verify Supabase connectivity - TEMPORARILY DISABLED due to DNS resolution issues
-    // await connectDB();
-    console.warn('⚠️  WARNING: Skipping Supabase pre-flight check. Database operations may fail if connectivity is not restored.');
+    // Verify Supabase connectivity
+    await connectDB();
 
     // Ensure upload directory exists
     storageService.ensureUploadDir();

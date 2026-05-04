@@ -52,28 +52,48 @@ const attachEntityMaps = async (findings) => {
  */
 exports.listFindings = async (req, res) => {
     try {
+        const userId = req.user.id;
         const limit = Number(req.query.limit || 500);
         const offset = Number(req.query.offset || 0);
         const minConfidence = Number(req.query.min_confidence || 0.1);
         const { severity, risk_type, document_id } = req.query;
 
+        // 1. Get user's document IDs
+        const { data: userDocs, error: docsError } = await supabase
+            .from('documents')
+            .select('id')
+            .eq('upload_user_id', userId);
+        
+        if (docsError) throw docsError;
+        const userDocIds = (userDocs || []).map(d => d.id);
+
+        if (userDocIds.length === 0) {
+            return res.json({ findings: [], total: 0, pagination: { limit, offset, hasMore: false } });
+        }
+
+        // 2. Query findings filtered by user's documents
         let query = supabase
             .from('findings')
             .select('id, document_id, clause_id, risk_type, severity, confidence, description, evidence_snippet, suggested_fix, created_at, notes, status', { count: 'exact' })
+            .in('document_id', userDocIds)
             .gte('confidence', minConfidence);
 
         if (severity) query = query.eq('severity', severity);
         if (risk_type) query = query.eq('risk_type', risk_type);
-        if (document_id) query = query.eq('document_id', document_id);
+        if (document_id) {
+            // Further filter if a specific doc_id was requested
+            if (userDocIds.includes(document_id)) {
+                query = query.eq('document_id', document_id);
+            } else {
+                return res.status(403).json({ message: 'Access denied to this document' });
+            }
+        }
 
         const { data, error, count } = await query
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
 
-        if (error) {
-            console.error('Supabase Query Error:', { error, query: 'listFindings' });
-            throw error;
-        }
+        if (error) throw error;
 
         const findings = await attachEntityMaps(data || []);
 
@@ -92,48 +112,37 @@ exports.listFindings = async (req, res) => {
 };
 
 /**
- * GET /api/findings/:id
- * Get a single finding by ID
- */
-exports.getFinding = async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('findings')
-            .select('id, document_id, clause_id, risk_type, severity, confidence, description, explanation, evidence_snippet, suggested_fix, policy_ref_id, created_at, notes, status')
-            .eq('id', req.params.id)
-            .maybeSingle();
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            return res.status(404).json({ message: 'Finding not found' });
-        }
-
-        const [finding] = await attachEntityMaps([data]);
-        res.json({ finding });
-    } catch (err) {
-        res.status(500).json({ message: 'Failed to fetch finding', error: err.message });
-    }
-};
-
-/**
  * GET /api/findings/stats
  * Get aggregated finding statistics
  */
 exports.getStats = async (req, res) => {
     try {
+        const userId = req.user.id;
         const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        // 1. Get user's document IDs
+        const { data: userDocs, error: docsError } = await supabase
+            .from('documents')
+            .select('id')
+            .eq('upload_user_id', userId);
+        
+        if (docsError) throw docsError;
+        const userDocIds = (userDocs || []).map(d => d.id);
+
+        if (userDocIds.length === 0) {
+            return res.json({ by_severity: [], by_risk_type: [], recent_7_days: 0, total: 0 });
+        }
 
         const [allRes, recentRes] = await Promise.all([
             supabase
                 .from('findings')
                 .select('severity, risk_type, confidence', { count: 'exact' })
+                .in('document_id', userDocIds)
                 .gte('confidence', 0.7),
             supabase
                 .from('findings')
                 .select('id', { count: 'exact' })
+                .in('document_id', userDocIds)
                 .gte('confidence', 0.7)
                 .gte('created_at', since),
         ]);
@@ -164,12 +173,49 @@ exports.getStats = async (req, res) => {
 };
 
 /**
+ * GET /api/findings/:id
+ * Get a single finding by ID
+ */
+exports.getFinding = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { data, error } = await supabase
+            .from('findings')
+            .select('*, documents!inner(upload_user_id)')
+            .eq('id', req.params.id)
+            .eq('documents.upload_user_id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!data) return res.status(404).json({ message: 'Finding not found or access denied' });
+
+        const [finding] = await attachEntityMaps([data]);
+        res.json({ finding });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch finding', error: err.message });
+    }
+};
+
+/**
  * PATCH /api/findings/:id
  * Update finding (e.g. status, notes)
  */
 exports.updateFinding = async (req, res) => {
     try {
+        const userId = req.user.id;
         const { status, notes } = req.body;
+        
+        // Check ownership first
+        const { data: finding, error: checkError } = await supabase
+            .from('findings')
+            .select('id, documents!inner(upload_user_id)')
+            .eq('id', req.params.id)
+            .eq('documents.upload_user_id', userId)
+            .maybeSingle();
+
+        if (checkError) throw checkError;
+        if (!finding) return res.status(404).json({ message: 'Finding not found or access denied' });
+
         const updates = {};
         if (status !== undefined) updates.status = status;
         if (notes !== undefined) updates.notes = notes;
@@ -178,8 +224,6 @@ exports.updateFinding = async (req, res) => {
             return res.status(400).json({ message: 'No fields to update' });
         }
         
-        console.log(`Updating finding ${req.params.id} with`, updates);
-
         const { data, error } = await supabase
             .from('findings')
             .update(updates)
@@ -187,19 +231,11 @@ exports.updateFinding = async (req, res) => {
             .select()
             .single();
 
-        if (error) {
-            console.error('Supabase Update Error Body:', error);
-            throw error;
-        }
+        if (error) throw error;
         
         res.json({ finding: { ...data, _id: data.id } });
     } catch (err) {
-        console.error('Update finding error:', err);
-        const isColumnError = err.message?.includes('column') && err.message?.includes('does not exist');
-        const message = isColumnError 
-            ? 'Database schema out of sync. Please run the SQL migration: ALTER TABLE public.findings ADD COLUMN notes TEXT, ADD COLUMN status TEXT DEFAULT \'pending\';'
-            : 'Failed to update finding';
-        res.status(500).json({ message, error: err.message });
+        res.status(500).json({ message: 'Failed to update finding', error: err.message });
     }
 };
 
@@ -209,18 +245,19 @@ exports.updateFinding = async (req, res) => {
  */
 exports.generateFixSuggestion = async (req, res) => {
     try {
+        const userId = req.user.id;
         const { id } = req.params;
         
-        // 1. Get finding details
+        // 1. Check ownership and get details
         const { data: finding, error: fetchError } = await supabase
             .from('findings')
-            .select('evidence_snippet, description')
+            .select('evidence_snippet, description, documents!inner(upload_user_id)')
             .eq('id', id)
-            .single();
+            .eq('documents.upload_user_id', userId)
+            .maybeSingle();
             
-        if (fetchError || !finding) {
-            return res.status(404).json({ message: 'Finding not found' });
-        }
+        if (fetchError) throw fetchError;
+        if (!finding) return res.status(404).json({ message: 'Finding not found or access denied' });
         
         // 2. Call NLP service
         const nlpService = require('../services/nlp.service');
@@ -241,7 +278,6 @@ exports.generateFixSuggestion = async (req, res) => {
         
         res.json({ suggested_fix: suggestedFix, finding: updated });
     } catch (err) {
-        console.error('Generate fix error:', err);
         res.status(500).json({ message: 'Failed to generate AI remediation', error: err.message });
     }
 };

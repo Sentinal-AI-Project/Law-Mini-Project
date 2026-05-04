@@ -71,16 +71,30 @@ exports.createPolicy = async (req, res) => {
  */
 exports.getDashboard = async (req, res) => {
     try {
-        const [docsRes, findingsRes] = await Promise.all([
-            supabase.from('documents').select('id, status', { count: 'exact' }),
-            supabase.from('findings').select('id, severity, risk_type, confidence, created_at, document_id, status', { count: 'exact' }).gte('confidence', 0.1),
-        ]);
+        const userId = req.user.id;
 
-        if (docsRes.error) throw docsRes.error;
-        if (findingsRes.error) throw findingsRes.error;
+        // 1. Fetch only this user's documents
+        const { data: docs, error: docsError } = await supabase
+            .from('documents')
+            .select('id, status')
+            .eq('upload_user_id', userId);
 
-        const docs = docsRes.data || [];
-        const findings = findingsRes.data || [];
+        if (docsError) throw docsError;
+
+        const docIds = (docs || []).map(d => d.id);
+        
+        // 2. Fetch findings only for those specific documents
+        let findings = [];
+        if (docIds.length > 0) {
+            const { data: findingsData, error: findingsError } = await supabase
+                .from('findings')
+                .select('id, severity, risk_type, confidence, created_at, document_id, status')
+                .in('document_id', docIds)
+                .gte('confidence', 0.1);
+
+            if (findingsError) throw findingsError;
+            findings = findingsData || [];
+        }
 
         const pendingDocuments = docs.filter((d) => d.status === 'pending').length;
         const analyzingDocuments = docs.filter((d) => d.status === 'analyzing').length;
@@ -227,9 +241,26 @@ exports.getTrends = async (req, res) => {
         const since = new Date();
         since.setDate(since.getDate() - days);
 
+        const userId = req.user.id;
+
+        // 1. Get user's document IDs
+        const { data: docs, error: docsError } = await supabase
+            .from('documents')
+            .select('id')
+            .eq('upload_user_id', userId);
+
+        if (docsError) throw docsError;
+        const docIds = (docs || []).map(d => d.id);
+
+        if (docIds.length === 0) {
+            return res.json({ trend: [], days });
+        }
+
+        // 2. Fetch findings only for those documents
         const { data: findings, error } = await supabase
             .from('findings')
             .select('id, severity, created_at, status')
+            .in('document_id', docIds)
             .gte('created_at', since.toISOString())
             .order('created_at', { ascending: true });
 

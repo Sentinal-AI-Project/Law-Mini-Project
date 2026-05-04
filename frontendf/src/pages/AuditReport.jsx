@@ -205,18 +205,19 @@ const AuditReport = () => {
 
   // Determine conic gradient for pie chart dynamically
   const getPieStyle = () => {
-    if (totalFindings === 0) return { background: 'var(--border-color)' };
-    const lowPct = (lowCount / totalFindings) * 100;
-    const medPct = (mediumCount / totalFindings) * 100;
-    const highPct = (highCount / totalFindings) * 100;
-    const critPct = (criticalCount / totalFindings) * 100;
+    const sumCounts = lowCount + mediumCount + highCount + criticalCount;
+    if (sumCounts === 0) return { background: 'var(--border-color)' };
+    
+    const lowPct = (lowCount / sumCounts) * 100;
+    const medPct = (mediumCount / sumCounts) * 100;
+    const highPct = (highCount / sumCounts) * 100;
     
     const p1 = lowPct;
     const p2 = p1 + medPct;
     const p3 = p2 + highPct;
     
     return {
-      background: `conic-gradient(#10b981 0% ${p1}%, #2563eb ${p1}% ${p2}%, #d97706 ${p2}% ${p3}%, #dc2626 ${p3}% 100%)`
+      background: `conic-gradient(var(--accent-teal) 0% ${p1}%, var(--accent-blue) ${p1}% ${p2}%, var(--accent-orange) ${p2}% ${p3}%, var(--accent-red) ${p3}% 100%)`
     };
   };
 

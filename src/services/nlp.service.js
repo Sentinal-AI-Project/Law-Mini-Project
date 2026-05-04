@@ -55,6 +55,7 @@ exports.analyze = async (doc, selectedFrameworks = ['General']) => {
                 suggested_fix: f.suggested_fix || null,
                 clause_id: f.clause_id || null,
                 policy_ref_id: f.policy_ref_id || null,
+                status: 'pending'
             }));
 
         if (validFindings.length > 0) {

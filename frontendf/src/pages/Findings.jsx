@@ -6,6 +6,7 @@ import { findingsAPI, docsAPI } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useComplianceData } from '../hooks/useComplianceData';
 
 const severityColor = (s) => {
   const lowS = (s || 'low').toLowerCase();
@@ -15,6 +16,7 @@ const severityColor = (s) => {
 };
 
 const Findings = () => {
+  const { refetch } = useComplianceData(0); // Only for refetch, disable polling here
   const [findings, setFindings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -99,6 +101,8 @@ const Findings = () => {
     
     try {
       await findingsAPI.update(selectedFindingId, { status: newStatus });
+      // Refresh global stats so dashboard/executive summary updates immediately
+      if (refetch) refetch();
     } catch (err) {
       setFindings(prev => prev.map(f => f._id === selectedFindingId ? { ...f, status: isReviewed ? 'reviewed' : 'pending' } : f));
       console.error('Failed to update status', err);

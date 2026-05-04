@@ -127,7 +127,9 @@ exports.getDashboard = async (req, res) => {
         let totalWeightedRisk = 0;
 
         for (const finding of findings) {
-            const isResolved = finding.status === 'reviewed' || finding.status === 'resolved';
+            const currentStatus = (finding.status || 'pending').toLowerCase().trim();
+            const isResolved = currentStatus === 'reviewed' || currentStatus === 'resolved';
+            
             if (isResolved) {
                 resolvedCount++;
             }

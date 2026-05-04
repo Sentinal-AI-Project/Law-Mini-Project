@@ -17,21 +17,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Build frontend in CI (GitHub runner has 7GB RAM, EC2 only has 460MB)
       - name: Build frontend
         run: |
           cd frontendf
           npm install
           npm run build
+      
+      - name: Prepare deployment bundle
+        run: |
+          # Create a bundle of only what we need (No node_modules!)
+          tar -czf deploy.tar.gz \
+            src/ \
+            AI/ \
+            frontendf/dist/ \
+            frontendf/Dockerfile \
+            frontendf/nginx.conf \
+            package.json \
+            docker-compose.yml \
+            Dockerfile.backend \
+            Dockerfile.ai \
+            requirements.txt \
+            app.py \
+            .env.example
 
-      # Copy entire repo (including built frontend dist/) to EC2
-      - name: Copy files to EC2
+      - name: Copy bundle to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
-          source: "./"
+          source: "deploy.tar.gz"
           target: "~/app/"
 
       - name: Execute deployment commands on EC2
@@ -43,14 +58,18 @@ jobs:
           command_timeout: 30m
           script: |
             cd ~/app
+            
+            # Extract bundle and clean up
+            tar -xzf deploy.tar.gz
+            rm deploy.tar.gz
 
-            # Create .env file with secrets for backend
+            # Create .env file
             echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
 
-            # Setup swap if not already present (needed for Docker builds on small instances)
+            # Setup swap for stability
             if [ ! -f /swapfile ]; then
               sudo fallocate -l 2G /swapfile
               sudo chmod 600 /swapfile
@@ -59,10 +78,13 @@ jobs:
             fi
             sudo swapon /swapfile 2>/dev/null || true
 
-            # Clean up old Docker artifacts to free disk space
-            docker system prune -af 2>/dev/null || true
+            # Prune old images to save space
+            docker system prune -af --volumes 2>/dev/null || true
 
-            # Restart services
-            docker compose down
-            docker compose build --no-cache
+            # Sequential Build (saves RAM)
+            docker compose build ai --no-cache
+            docker compose build backend --no-cache
+            docker compose build frontend --no-cache
+            
+            # Restart all
             docker compose up -d --force-recreate

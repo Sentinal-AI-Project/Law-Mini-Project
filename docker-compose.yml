@@ -13,7 +13,7 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - NLP_SERVICE_URL=http://ai:5001
-      - CLIENT_URL=http://localhost:5173
+      - CLIENT_URL=http://13.236.92.227
     depends_on:
       - ai
 

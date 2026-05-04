@@ -278,10 +278,14 @@ exports.getFindings = async (req, res) => {
 
         const findings = (findingRows || []).map(mapFinding);
 
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ message: 'Authentication required' });
+
         const { data: doc, error: docError } = await supabase
             .from('documents')
-            .select('status')
+            .select('*, findings(id, severity)')
             .eq('id', req.params.id)
+            .eq('upload_user_id', userId)
             .maybeSingle();
 
         if (docError) {
@@ -410,20 +414,19 @@ exports.deleteDocument = async (req, res) => {
     try {
         const { id } = req.params;
 
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ message: 'Authentication required' });
+
         // 1. Get document to check ownership and get storage path
         const { data: doc, error: docError } = await supabase
             .from('documents')
             .select('*')
             .eq('id', id)
+            .eq('upload_user_id', userId)
             .maybeSingle();
 
         if (docError) throw docError;
-        if (!doc) return res.status(404).json({ message: 'Document not found' });
-
-        // Security check: must be the uploader or an admin (if roles added)
-        if (doc.upload_user_id !== req.user.id) {
-            return res.status(403).json({ message: 'You do not have permission to delete this document' });
-        }
+        if (!doc) return res.status(404).json({ message: 'Document not found or access denied' });
 
         // 2. Delete associated findings
         await supabase.from('findings').delete().eq('document_id', id);

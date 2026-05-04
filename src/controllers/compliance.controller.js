@@ -71,7 +71,12 @@ exports.createPolicy = async (req, res) => {
  */
 exports.getDashboard = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+        console.log(`[DASHBOARD] Fetching for user: ${userId}`);
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
 
         // 1. Fetch only this user's documents
         const { data: docs, error: docsError } = await supabase
@@ -81,7 +86,22 @@ exports.getDashboard = async (req, res) => {
 
         if (docsError) throw docsError;
 
-        const docIds = (docs || []).map(d => d.id);
+        if (!docs || docs.length === 0) {
+            console.log(`[DASHBOARD] User ${userId} has no documents. Returning empty state.`);
+            return res.json({
+                totalDocuments: 0,
+                totalFindings: 0,
+                resolvedCount: 0,
+                activeFindings: 0,
+                complianceScore: 100,
+                processingCount: 0,
+                documents: { total: 0, pending: 0, analyzing: 0, completed: 0 },
+                findings: { total: 0, resolved: 0, active: 0, by_severity: [], by_risk_type: [] },
+                recent_critical: []
+            });
+        }
+
+        const docIds = docs.map(d => d.id);
         
         // 2. Fetch findings only for those specific documents
         let findings = [];
@@ -241,7 +261,8 @@ exports.getTrends = async (req, res) => {
         const since = new Date();
         since.setDate(since.getDate() - days);
 
-        const userId = req.user.id;
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ message: 'Authentication required' });
 
         // 1. Get user's document IDs
         const { data: docs, error: docsError } = await supabase
@@ -252,7 +273,7 @@ exports.getTrends = async (req, res) => {
         if (docsError) throw docsError;
         const docIds = (docs || []).map(d => d.id);
 
-        if (docIds.length === 0) {
+        if (!docIds || docIds.length === 0) {
             return res.json({ trend: [], days });
         }
 

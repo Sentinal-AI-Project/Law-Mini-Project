@@ -52,7 +52,12 @@ const attachEntityMaps = async (findings) => {
  */
 exports.listFindings = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+        if (!userId) {
+            console.error('Authentication attempt without userId');
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
         const limit = Number(req.query.limit || 500);
         const offset = Number(req.query.offset || 0);
         const minConfidence = Number(req.query.min_confidence || 0.1);
@@ -186,18 +191,8 @@ exports.getStats = async (req, res) => {
  */
 exports.getFinding = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { data: userDocs, error: docsError } = await supabase
-            .from('documents')
-            .select('id')
-            .eq('upload_user_id', userId);
-            
-        if (docsError) throw docsError;
-        const userDocIds = (userDocs || []).map(doc => doc.id);
-
-        if (userDocIds.length === 0) {
-            return res.status(404).json({ message: 'Finding not found or access denied' });
-        }
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ message: 'Authentication required' });
 
         const { data, error } = await supabase
             .from('findings')
@@ -222,7 +217,8 @@ exports.getFinding = async (req, res) => {
  */
 exports.updateFinding = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ message: 'Authentication required' });
         const { status, notes } = req.body;
         
         // Check ownership first

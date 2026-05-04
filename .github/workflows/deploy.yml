@@ -25,42 +25,38 @@ jobs:
       
       - name: Prepare deployment bundle
         run: |
-          # Create a bundle of only what we need
           tar -czf deploy.tar.gz \
-            src/ \
-            AI/ \
-            frontendf/dist/ \
-            frontendf/Dockerfile \
-            frontendf/nginx.conf \
-            package.json \
-            docker-compose.yml \
-            Dockerfile.backend \
-            Dockerfile.ai \
-            requirements.txt \
-            app.py \
-            .env.example
+            src/ AI/ frontendf/dist/ frontendf/Dockerfile frontendf/nginx.conf \
+            package.json docker-compose.yml Dockerfile.backend Dockerfile.ai \
+            requirements.txt app.py .env.example
           
-          echo "Deployment bundle created:"
-          ls -lh deploy.tar.gz
+          echo "Deployment bundle created (Size: $(du -sh deploy.tar.gz | cut -f1))"
 
-      - name: EC2 Health Check & Setup
+      - name: EC2 Emergency Cleanup & Setup
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
           script: |
-            echo "--- Disk Space ---"
+            echo "--- Disk Space Before Cleanup ---"
             df -h /
-            echo "--- Memory ---"
-            free -m
-            mkdir -p ~/app
+            
+            # Aggressively reclaim space
+            sudo docker system prune -af --volumes || true
+            sudo journalctl --vacuum-time=1d || true
+            
+            echo "--- Disk Space After Cleanup ---"
+            df -h /
+            
+            mkdir -p /home/${{ secrets.AWS_EC2_USER }}/app
+            sudo chown -R ${{ secrets.AWS_EC2_USER }}:${{ secrets.AWS_EC2_USER }} /home/${{ secrets.AWS_EC2_USER }}/app
 
       - name: Copy bundle to EC2 (Native SCP)
         run: |
           echo "${{ secrets.AWS_EC2_PRIVATE_KEY }}" > private_key
           chmod 600 private_key
-          scp -v -o StrictHostKeyChecking=no -i private_key deploy.tar.gz ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }}:~/app/
+          scp -o StrictHostKeyChecking=no -i private_key deploy.tar.gz ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }}:/home/${{ secrets.AWS_EC2_USER }}/app/
           rm private_key
 
       - name: Execute deployment commands on EC2
@@ -71,39 +67,33 @@ jobs:
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
           command_timeout: 60m
           script: |
-            cd ~/app
+            cd /home/${{ secrets.AWS_EC2_USER }}/app
             
-            # Extract bundle and clean up
             if [ -f deploy.tar.gz ]; then
               tar -xzf deploy.tar.gz
               rm deploy.tar.gz
             else
-              echo "Error: deploy.tar.gz not found in $(pwd)"
+              echo "Error: deploy.tar.gz not found!"
               exit 1
             fi
 
-            # Create .env file
+            # Create .env
             echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
 
-            # Setup swap for stability
+            # Swap Setup
             if [ ! -f /swapfile ]; then
               sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
               sudo chmod 600 /swapfile
               sudo mkswap /swapfile
-              sudo swapon /swapfile
             fi
             sudo swapon /swapfile 2>/dev/null || true
 
-            # Prune old images to save space
-            docker system prune -af --volumes 2>/dev/null || true
-
-            # Sequential Build (saves RAM)
+            # Build Sequential
             docker compose build ai --no-cache
             docker compose build backend --no-cache
             docker compose build frontend --no-cache
             
-            # Restart all
             docker compose up -d --force-recreate

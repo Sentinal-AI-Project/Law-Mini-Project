@@ -39,6 +39,9 @@ jobs:
             requirements.txt \
             app.py \
             .env.example
+          
+          echo "Deployment bundle created:"
+          ls -lh deploy.tar.gz
 
       - name: Create target directory on EC2
         uses: appleboy/ssh-action@master
@@ -46,9 +49,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
-          script: |
-            mkdir -p /home/${{ secrets.AWS_EC2_USER }}/app
-            chown -R ${{ secrets.AWS_EC2_USER }}:${{ secrets.AWS_EC2_USER }} /home/${{ secrets.AWS_EC2_USER }}/app
+          script: mkdir -p $HOME/app
 
       - name: Copy bundle to EC2
         uses: appleboy/scp-action@master
@@ -57,7 +58,7 @@ jobs:
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
           source: "deploy.tar.gz"
-          target: "/home/${{ secrets.AWS_EC2_USER }}/app/"
+          target: "app/"
           timeout: 5m
           command_timeout: 10m
           rm: false
@@ -70,14 +71,14 @@ jobs:
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
           command_timeout: 60m
           script: |
-            cd /home/${{ secrets.AWS_EC2_USER }}/app
+            cd $HOME/app
             
             # Extract bundle and clean up
             if [ -f deploy.tar.gz ]; then
               tar -xzf deploy.tar.gz
               rm deploy.tar.gz
             else
-              echo "Error: deploy.tar.gz not found!"
+              echo "Error: deploy.tar.gz not found in $(pwd)"
               exit 1
             fi
 

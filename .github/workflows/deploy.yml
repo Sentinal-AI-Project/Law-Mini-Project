@@ -40,6 +40,14 @@ jobs:
             app.py \
             .env.example
 
+      - name: Create target directory on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
+          script: mkdir -p ~/app
+
       - name: Copy bundle to EC2
         uses: appleboy/scp-action@master
         with:
@@ -48,6 +56,9 @@ jobs:
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
           source: "deploy.tar.gz"
           target: "~/app/"
+          timeout: 5m
+          command_timeout: 10m
+          rm: true
 
       - name: Execute deployment commands on EC2
         uses: appleboy/ssh-action@master
@@ -55,13 +66,18 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
-          command_timeout: 30m
+          command_timeout: 60m
           script: |
             cd ~/app
             
             # Extract bundle and clean up
-            tar -xzf deploy.tar.gz
-            rm deploy.tar.gz
+            if [ -f deploy.tar.gz ]; then
+              tar -xzf deploy.tar.gz
+              rm deploy.tar.gz
+            else
+              echo "Error: deploy.tar.gz not found!"
+              exit 1
+            fi
 
             # Create .env file
             echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env

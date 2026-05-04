@@ -68,7 +68,15 @@ exports.listFindings = async (req, res) => {
         const userDocIds = (userDocs || []).map(d => d.id);
 
         if (userDocIds.length === 0) {
-            return res.json({ findings: [], total: 0, pagination: { limit, offset, hasMore: false } });
+            return res.json({
+                findings: [],
+                total: 0,
+                pagination: {
+                    limit,
+                    offset,
+                    hasMore: false,
+                },
+            });
         }
 
         // 2. Query findings filtered by user's documents
@@ -179,6 +187,18 @@ exports.getStats = async (req, res) => {
 exports.getFinding = async (req, res) => {
     try {
         const userId = req.user.id;
+        const { data: userDocs, error: docsError } = await supabase
+            .from('documents')
+            .select('id')
+            .eq('upload_user_id', userId);
+            
+        if (docsError) throw docsError;
+        const userDocIds = (userDocs || []).map(doc => doc.id);
+
+        if (userDocIds.length === 0) {
+            return res.status(404).json({ message: 'Finding not found or access denied' });
+        }
+
         const { data, error } = await supabase
             .from('findings')
             .select('*, documents!inner(upload_user_id)')

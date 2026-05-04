@@ -2,8 +2,8 @@ const supabase = require('../config/supabase');
 const nlpService = require('../services/nlp.service');
 
 const mapDocument = (row) => {
-    let risk_level = 'Low';
-    let findings_count = 0;
+    let risk_level = row.risk_level || 'Low';
+    let findings_count = row.findings_count || 0;
 
     if (row.findings && Array.isArray(row.findings)) {
         findings_count = row.findings.length;
@@ -315,7 +315,7 @@ exports.listDocuments = async (req, res) => {
 
         let query = supabase
             .from('documents')
-            .select('id, filename, doc_type, upload_user_id, source_url, status, uploaded_at, findings(id, severity)', { count: 'exact' })
+            .select('id, filename, doc_type, upload_user_id, source_url, status, uploaded_at', { count: 'exact' })
             .eq('upload_user_id', req.user.id);
 
         if (status) {
@@ -338,7 +338,15 @@ exports.listDocuments = async (req, res) => {
             throw error;
         }
 
-        const documents = (data || []).map(mapDocument);
+        // 2. Fetch findings count and risk levels for these documents
+        const documents = await Promise.all((data || []).map(async (doc) => {
+            const { data: findings } = await supabase
+                .from('findings')
+                .select('severity')
+                .eq('document_id', doc.id);
+            
+            return mapDocument({ ...doc, findings });
+        }));
 
         res.json({
             documents,

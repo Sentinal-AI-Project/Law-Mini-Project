@@ -5,12 +5,7 @@ import { complianceAPI, docsAPI } from '../services/api';
 import { useComplianceData } from '../hooks/useComplianceData';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
-const riskData = [
-  { name: 'Low', value: 50.6, color: 'var(--accent-teal)' },
-  { name: 'Medium', value: 31.5, color: 'var(--accent-orange)' },
-  { name: 'High', value: 13.5, color: 'var(--accent-red)' },
-  { name: 'Critical', value: 4.4, color: 'var(--accent-blue)' },
-];
+// Unused mock data removed to ensure clean dynamic integration
 
 const ComplianceDashboard = () => {
   const { stats, loading } = useComplianceData(30000);
